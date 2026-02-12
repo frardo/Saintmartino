@@ -11,6 +11,7 @@ export const products = pgTable("products", {
   metal: text("metal").notNull(), // Gold, Silver, etc.
   stone: text("stone"), // Diamond, Pearl, etc.
   imageUrl: text("image_url").notNull(),
+  secondaryImageUrl: text("secondary_image_url"), // Added for hover effect
   isNew: boolean("is_new").default(false),
 });
 

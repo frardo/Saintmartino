@@ -40,6 +40,7 @@ async function seedDatabase() {
         metal: "14k Gold",
         stone: "Diamond",
         imageUrl: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop",
+        secondaryImageUrl: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=800&auto=format&fit=crop",
       },
       {
         name: "The Teardrop Ring",
@@ -48,6 +49,7 @@ async function seedDatabase() {
         metal: "14k Gold",
         stone: "Topaz",
         imageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=800&auto=format&fit=crop",
+        secondaryImageUrl: "https://images.unsplash.com/photo-1598560976315-182f03dfbb83?q=80&w=800&auto=format&fit=crop",
       },
       {
         name: "The Solis Ring",
@@ -56,6 +58,7 @@ async function seedDatabase() {
         metal: "Silver",
         stone: null,
         imageUrl: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=800&auto=format&fit=crop",
+        secondaryImageUrl: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop",
       },
       {
         name: "The Moody Ring",
@@ -64,6 +67,7 @@ async function seedDatabase() {
         metal: "14k Gold",
         stone: "Sapphire",
         imageUrl: "https://images.unsplash.com/photo-1598560976315-182f03dfbb83?q=80&w=800&auto=format&fit=crop",
+        secondaryImageUrl: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=800&auto=format&fit=crop",
       },
       {
         name: "The Duo Ring",
@@ -72,6 +76,7 @@ async function seedDatabase() {
         metal: "14k Gold",
         stone: "Diamond",
         imageUrl: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop",
+        secondaryImageUrl: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=800&auto=format&fit=crop",
       },
       {
         name: "The Classic Band",
@@ -80,6 +85,7 @@ async function seedDatabase() {
         metal: "Silver",
         stone: null,
         imageUrl: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=800&auto=format&fit=crop",
+        secondaryImageUrl: "https://images.unsplash.com/photo-1598560976315-182f03dfbb83?q=80&w=800&auto=format&fit=crop",
       }
     ];
 

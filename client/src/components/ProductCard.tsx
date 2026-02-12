@@ -28,10 +28,27 @@ export function ProductCard({ product }: ProductCardProps) {
         <motion.img
           src={product.imageUrl}
           alt={product.name}
-          className="h-full w-full object-cover object-center"
-          animate={{ scale: isHovered ? 1.05 : 1 }}
-          transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }} // smooth easeOutCubic
+          className="absolute inset-0 h-full w-full object-cover object-center"
+          animate={{ 
+            scale: isHovered ? 1.05 : 1,
+            opacity: isHovered && product.secondaryImageUrl ? 0 : 1
+          }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
         />
+
+        {product.secondaryImageUrl && (
+          <motion.img
+            src={product.secondaryImageUrl}
+            alt={`${product.name} alternate view`}
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            initial={{ opacity: 0 }}
+            animate={{ 
+              scale: isHovered ? 1.05 : 1,
+              opacity: isHovered ? 1 : 0 
+            }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+          />
+        )}
 
         {/* Quick Add Overlay */}
         <motion.div 
