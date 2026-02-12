@@ -1,0 +1,70 @@
+import { useState } from "react";
+import { Link } from "wouter";
+import { motion } from "framer-motion";
+import type { Product } from "@shared/schema";
+
+interface ProductCardProps {
+  product: Product;
+}
+
+export function ProductCard({ product }: ProductCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <Link href={`/product/${product.id}`} className="group block cursor-pointer">
+      <div 
+        className="relative aspect-[3/4] overflow-hidden bg-secondary mb-4"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {product.isNew && (
+          <div className="absolute top-3 left-3 z-10">
+            <span className="bg-white/90 backdrop-blur text-[10px] uppercase tracking-widest font-semibold px-2 py-1">
+              New
+            </span>
+          </div>
+        )}
+        
+        <motion.img
+          src={product.imageUrl}
+          alt={product.name}
+          className="h-full w-full object-cover object-center"
+          animate={{ scale: isHovered ? 1.05 : 1 }}
+          transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }} // smooth easeOutCubic
+        />
+
+        {/* Quick Add Overlay */}
+        <motion.div 
+          className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          initial={false}
+        >
+          <button className="w-full bg-white text-black py-3 text-xs uppercase tracking-widest font-semibold hover:bg-primary hover:text-white transition-colors">
+            Quick Add
+          </button>
+        </motion.div>
+      </div>
+
+      <div className="space-y-1">
+        <div className="flex justify-between items-start">
+          <h3 className="font-serif text-lg leading-tight text-foreground group-hover:underline decoration-1 underline-offset-4 decoration-primary/50">
+            {product.name}
+          </h3>
+          <span className="font-sans text-sm text-muted-foreground ml-4">
+            ${Number(product.price).toFixed(2)}
+          </span>
+        </div>
+        
+        <div className="flex items-center gap-2 pt-1">
+          {/* Metal Swatches Mockup - Assuming generic variation logic for UI purposes */}
+          <div className="flex gap-1">
+            <div className="w-3 h-3 rounded-full bg-[#E5D0A1] border border-black/10" title="Gold" />
+            <div className="w-3 h-3 rounded-full bg-[#E0E0E0] border border-black/10" title="Silver" />
+          </div>
+          <span className="text-xs text-muted-foreground pl-1">
+            {product.metal}
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}

@@ -1,18 +1,34 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+// === TABLE DEFINITIONS ===
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  price: decimal("price").notNull(),
+  type: text("type").notNull(), // Ring, Necklace, etc.
+  metal: text("metal").notNull(), // Gold, Silver, etc.
+  stone: text("stone"), // Diamond, Pearl, etc.
+  imageUrl: text("image_url").notNull(),
+  isNew: boolean("is_new").default(false),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-});
+// === BASE SCHEMAS ===
+export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+// === EXPLICIT API CONTRACT TYPES ===
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+
+// Response types
+export type ProductResponse = Product;
+export type ProductsListResponse = Product[];
+
+// Query types
+export interface ProductsQueryParams {
+  type?: string;
+  metal?: string;
+  stone?: string;
+  sort?: 'price_asc' | 'price_desc' | 'newest';
+}
