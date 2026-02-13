@@ -6,6 +6,7 @@ import { z } from "zod";
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  description: text("description"), // Added description
   price: decimal("price").notNull(),
   type: text("type").notNull(), // Ring, Necklace, etc.
   metal: text("metal").notNull(), // Gold, Silver, etc.

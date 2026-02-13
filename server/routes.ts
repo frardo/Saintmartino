@@ -35,6 +35,7 @@ async function seedDatabase() {
     const rings = [
       {
         name: "The Curve Ring",
+        description: "A beautifully sculpted 14k gold band that elegantly curves around the finger. Perfect for stacking or wearing alone as a statement piece.",
         price: "320.00",
         type: "Ring",
         metal: "14k Gold",
@@ -44,6 +45,7 @@ async function seedDatabase() {
       },
       {
         name: "The Teardrop Ring",
+        description: "Featuring a stunning pear-cut topaz set in polished 14k gold. This ring captures the light from every angle.",
         price: "450.00",
         type: "Ring",
         metal: "14k Gold",
@@ -53,6 +55,7 @@ async function seedDatabase() {
       },
       {
         name: "The Solis Ring",
+        description: "Inspired by the sun, this sterling silver band features intricate radial engravings. A modern classic for everyday wear.",
         price: "280.00",
         type: "Ring",
         metal: "Silver",
@@ -62,6 +65,7 @@ async function seedDatabase() {
       },
       {
         name: "The Moody Ring",
+        description: "Deep blue sapphire set in a heavy 14k gold band. Bold, sophisticated, and unmistakably unique.",
         price: "380.00",
         type: "Ring",
         metal: "14k Gold",
@@ -71,6 +75,7 @@ async function seedDatabase() {
       },
       {
         name: "The Duo Ring",
+        description: "Two interlocking bands of 14k gold representing connection and balance. Accented with brilliant pavé diamonds.",
         price: "520.00",
         type: "Ring",
         metal: "14k Gold",
@@ -80,6 +85,7 @@ async function seedDatabase() {
       },
       {
         name: "The Classic Band",
+        description: "A minimalist sterling silver band with a high-polish finish. The quintessential foundation for any jewelry collection.",
         price: "150.00",
         type: "Ring",
         metal: "Silver",
