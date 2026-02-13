@@ -1,8 +1,8 @@
-# KINN Jewelry E-commerce Store
+# SAINT MARTINO Jewelry E-commerce Store
 
 ## Overview
 
-This is a premium jewelry e-commerce storefront called "KINN" — a full-stack web application with a React frontend and Express backend, backed by a PostgreSQL database. The app displays jewelry products (rings, necklaces, earrings) with filtering, sorting, and product detail views. The design aesthetic is luxury/minimalist with a warm beige color palette, serif headings (Playfair Display), and smooth Framer Motion animations.
+This is a premium jewelry e-commerce storefront called "SAINT MARTINO" — a full-stack web application with a React frontend and Express backend, backed by a PostgreSQL database. The app displays jewelry products (rings, necklaces, earrings) with filtering, sorting, and product detail views. The design aesthetic is luxury/minimalist with a warm beige color palette, serif headings (Playfair Display), and smooth Framer Motion animations.
 
 ## User Preferences
 

@@ -138,7 +138,7 @@ export default function Home() {
       <footer className="bg-[#1C1C1C] text-white/80 py-16 md:py-24">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="space-y-6">
-            <h4 className="font-serif text-2xl text-white">KINN</h4>
+            <h4 className="font-serif text-2xl text-white">SAINT MARTINO</h4>
             <p className="text-sm leading-relaxed max-w-xs text-white/60">
               Creating modern heirlooms that tell your story. Sustainable materials, transparent pricing, and timeless design.
             </p>

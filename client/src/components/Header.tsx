@@ -20,7 +20,7 @@ export function Header() {
         {/* Logo */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <Link href="/" className="font-serif text-2xl font-semibold tracking-tighter hover:opacity-80 transition-opacity">
-            KINN
+            SAINT MARTINO
           </Link>
         </div>
 
