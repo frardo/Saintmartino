@@ -208,7 +208,7 @@ export function ProductFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{product ? "Edit Product" : "Add New Product"}</DialogTitle>
+          <DialogTitle>{product ? "Editar Produto" : "Novo Produto"}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -218,9 +218,9 @@ export function ProductFormDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Product Name</FormLabel>
+                  <FormLabel>Nome do Produto</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. The Curve Ring" {...field} />
+                    <Input placeholder="Ex: Relógio Suíço de Ouro" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -232,9 +232,9 @@ export function ProductFormDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Descrição</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Product description..." {...field} />
+                    <Textarea placeholder="Descrição do produto..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -247,7 +247,7 @@ export function ProductFormDialog({
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price</FormLabel>
+                    <FormLabel>Preço</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -266,18 +266,18 @@ export function ProductFormDialog({
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Type</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <FormLabel>Tipo</FormLabel>
+                    <Select value={field.value || ""} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
+                          <SelectValue placeholder="Selecione o tipo" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Ring">Ring</SelectItem>
-                        <SelectItem value="Necklace">Necklace</SelectItem>
-                        <SelectItem value="Earring">Earring</SelectItem>
-                        <SelectItem value="Bracelet">Bracelet</SelectItem>
+                        <SelectItem value="Relógio de Pulso">Relógio de Pulso</SelectItem>
+                        <SelectItem value="Relógio de Bolso">Relógio de Bolso</SelectItem>
+                        <SelectItem value="Pulseira">Pulseira</SelectItem>
+                        <SelectItem value="Acessório">Acessório</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -292,18 +292,19 @@ export function ProductFormDialog({
                 name="metal"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Metal</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <FormLabel>Material</FormLabel>
+                    <Select value={field.value || ""} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select metal" />
+                          <SelectValue placeholder="Selecione o material" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="14k Gold">14k Gold</SelectItem>
-                        <SelectItem value="Sterling Silver">Sterling Silver</SelectItem>
-                        <SelectItem value="Rose Gold">Rose Gold</SelectItem>
-                        <SelectItem value="Platinum">Platinum</SelectItem>
+                        <SelectItem value="Ouro">Ouro</SelectItem>
+                        <SelectItem value="Prata">Prata</SelectItem>
+                        <SelectItem value="Ouro Rose">Ouro Rose</SelectItem>
+                        <SelectItem value="Aço Inoxidável">Aço Inoxidável</SelectItem>
+                        <SelectItem value="Titânio">Titânio</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -316,19 +317,19 @@ export function ProductFormDialog({
                 name="stone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Stone</FormLabel>
+                    <FormLabel>Pedra</FormLabel>
                     <Select value={field.value || "none"} onValueChange={(value) => field.onChange(value === "none" ? null : value)}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select stone" />
+                          <SelectValue placeholder="Selecione a pedra" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        <SelectItem value="Diamond">Diamond</SelectItem>
-                        <SelectItem value="Sapphire">Sapphire</SelectItem>
-                        <SelectItem value="Topaz">Topaz</SelectItem>
-                        <SelectItem value="Pearl">Pearl</SelectItem>
+                        <SelectItem value="none">Nenhuma</SelectItem>
+                        <SelectItem value="Diamante">Diamante</SelectItem>
+                        <SelectItem value="Safira">Safira</SelectItem>
+                        <SelectItem value="Topázio">Topázio</SelectItem>
+                        <SelectItem value="Pérola">Pérola</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -339,7 +340,7 @@ export function ProductFormDialog({
 
             {/* Images Gallery (up to 6) */}
             <FormItem>
-              <FormLabel>Product Images (up to 6)</FormLabel>
+              <FormLabel>Imagens do Produto (até 6)</FormLabel>
               <div className="space-y-3">
                 {/* Image Grid */}
                 <div className="grid grid-cols-3 gap-2">
@@ -358,7 +359,7 @@ export function ProductFormDialog({
                     >
                       <img
                         src={preview}
-                        alt={`Product ${index + 1}`}
+                        alt={`Produto ${index + 1}`}
                         className="h-full w-full object-cover pointer-events-none"
                         draggable={false}
                       />
@@ -396,9 +397,9 @@ export function ProductFormDialog({
 
                 {/* Info Text */}
                 <p className="text-xs text-muted-foreground">
-                  {imagePreviews.length} of 6 images
+                  {imagePreviews.length} de 6 imagens
                   {imagePreviews.length > 0 && (
-                    <span> • Click X to remove • Click + to add more</span>
+                    <span> • Clique X para remover • Clique + para adicionar</span>
                   )}
                 </p>
               </div>
@@ -411,7 +412,7 @@ export function ProductFormDialog({
                 name="discountPercent"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Discount %</FormLabel>
+                    <FormLabel>Desconto %</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -431,9 +432,9 @@ export function ProductFormDialog({
                 name="discountLabel"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Discount Label</FormLabel>
+                    <FormLabel>Etiqueta de Desconto</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. SALE" {...field} />
+                      <Input placeholder="Ex: PROMOÇÃO" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -446,7 +447,7 @@ export function ProductFormDialog({
               name="isNew"
               render={({ field }) => (
                 <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                  <FormLabel className="cursor-pointer">Mark as New</FormLabel>
+                  <FormLabel className="cursor-pointer">Marcar como Novo</FormLabel>
                   <FormControl>
                     <Switch
                       checked={field.value}
@@ -464,10 +465,10 @@ export function ProductFormDialog({
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting || isUploading}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button type="submit" disabled={isSubmitting || isLoading || isUploading}>
-                {isSubmitting || isLoading ? "Saving..." : isUploading ? "Uploading..." : "Save Product"}
+                {isSubmitting || isLoading ? "Salvando..." : isUploading ? "Enviando..." : "Salvar Produto"}
               </Button>
             </DialogFooter>
           </form>

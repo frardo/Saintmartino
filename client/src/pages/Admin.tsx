@@ -98,20 +98,20 @@ export default function Admin() {
           data,
         });
         toast({
-          title: "Product updated",
-          description: "Product changes have been saved.",
+          title: "Produto atualizado",
+          description: "As alterações foram salvas com sucesso.",
         });
       } else {
         await createProduct.mutateAsync(data);
         toast({
-          title: "Product created",
-          description: "New product has been added to your store.",
+          title: "Produto criado",
+          description: "O novo produto foi adicionado à sua loja.",
         });
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to save product",
+        title: "Erro",
+        description: error.message || "Falha ao salvar o produto",
         variant: "destructive",
       });
     }
@@ -123,13 +123,13 @@ export default function Admin() {
       await deleteProduct.mutateAsync(deleteConfirm);
       setDeleteConfirm(null);
       toast({
-        title: "Product deleted",
-        description: "Product has been removed from your store.",
+        title: "Produto deletado",
+        description: "O produto foi removido da sua loja.",
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete product",
+        title: "Erro",
+        description: error.message || "Falha ao deletar o produto",
         variant: "destructive",
       });
     }
@@ -173,53 +173,53 @@ export default function Admin() {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="font-serif text-4xl font-semibold mb-2">Admin Dashboard</h1>
+            <h1 className="font-serif text-4xl font-semibold mb-2">Painel Administrativo</h1>
             <Link href="/" className="text-sm text-primary hover:underline">
-              ← Back to Store
+              ← Voltar para Loja
             </Link>
           </div>
         </div>
 
         <Tabs defaultValue="products" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="promotions">Promotions</TabsTrigger>
-            <TabsTrigger value="coupons">Coupons</TabsTrigger>
+            <TabsTrigger value="products">Produtos</TabsTrigger>
+            <TabsTrigger value="promotions">Promoções</TabsTrigger>
+            <TabsTrigger value="coupons">Cupons</TabsTrigger>
             <TabsTrigger value="banners">Banners</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+            <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
 
           {/* Products Tab */}
           <TabsContent value="products" className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="font-serif text-2xl font-semibold">Products</h2>
+              <h2 className="font-serif text-2xl font-semibold">Produtos</h2>
               <Button onClick={openCreateDialog} className="gap-2">
                 <Plus className="h-4 w-4" />
-                Add Product
+                Novo Produto
               </Button>
             </div>
 
             {productsLoading ? (
               <div className="text-center py-12 text-muted-foreground">
-                Loading products...
+                Carregando produtos...
               </div>
             ) : !products || products.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
-                No products yet. Create your first product!
+                Nenhum produto cadastrado. Crie seu primeiro produto!
               </div>
             ) : (
               <div className="border rounded-lg overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Image</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Discount</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Metal</TableHead>
-                      <TableHead>New</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>Imagem</TableHead>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Preço</TableHead>
+                      <TableHead>Desconto</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Material</TableHead>
+                      <TableHead>Novo</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -227,15 +227,15 @@ export default function Admin() {
                       <TableRow key={product.id}>
                         <TableCell>
                           <img
-                            src={product.imageUrl}
+                            src={product.imageUrls?.[0] || ""}
                             alt={product.name}
-                            className="h-10 w-10 object-cover"
+                            className="h-10 w-10 object-cover rounded bg-secondary"
                           />
                         </TableCell>
                         <TableCell className="font-medium">
                           {product.name}
                         </TableCell>
-                        <TableCell>${Number(product.price).toFixed(2)}</TableCell>
+                        <TableCell>R$ {Number(product.price).toFixed(2)}</TableCell>
                         <TableCell>
                           {product.discountPercent > 0 ? (
                             <Badge variant="secondary">
@@ -249,7 +249,7 @@ export default function Admin() {
                         <TableCell>{product.metal}</TableCell>
                         <TableCell>
                           {product.isNew ? (
-                            <Badge>New</Badge>
+                            <Badge>Novo</Badge>
                           ) : (
                             <span className="text-muted-foreground">-</span>
                           )}
@@ -493,18 +493,18 @@ export default function Admin() {
       <AlertDialog open={deleteConfirm !== null} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+            <AlertDialogTitle>Deletar Produto</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this product? This action cannot be undone.
+              Tem certeza que deseja deletar este produto? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteProduct}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              Deletar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
