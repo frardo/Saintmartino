@@ -26,25 +26,25 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
         
         <motion.img
-          src={product.imageUrl}
+          src={product.imageUrls[0]}
           alt={product.name}
           className="absolute inset-0 h-full w-full object-cover object-center"
-          animate={{ 
+          animate={{
             scale: isHovered ? 1.05 : 1,
-            opacity: isHovered && product.secondaryImageUrl ? 0 : 1
+            opacity: isHovered && product.imageUrls.length > 1 ? 0 : 1
           }}
           transition={{ duration: 0.8, ease: "easeInOut" }}
         />
 
-        {product.secondaryImageUrl && (
+        {product.imageUrls.length > 1 && (
           <motion.img
-            src={product.secondaryImageUrl}
+            src={product.imageUrls[1]}
             alt={`${product.name} alternate view`}
             className="absolute inset-0 h-full w-full object-cover object-center"
             initial={{ opacity: 0 }}
-            animate={{ 
+            animate={{
               scale: isHovered ? 1.05 : 1,
-              opacity: isHovered ? 1 : 0 
+              opacity: isHovered ? 1 : 0
             }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
           />

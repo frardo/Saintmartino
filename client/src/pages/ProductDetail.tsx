@@ -51,7 +51,7 @@ export default function ProductDetail() {
             >
               <motion.img
                 key={selectedImageIndex}
-                src={selectedImageIndex === 0 ? product.imageUrl : product.secondaryImageUrl || product.imageUrl}
+                src={product.imageUrls[selectedImageIndex]}
                 alt={product.name}
                 className="w-full h-full object-cover"
                 initial={{ opacity: 0 }}
@@ -60,36 +60,28 @@ export default function ProductDetail() {
               />
             </motion.div>
 
-            {/* Thumbnail Images */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setSelectedImageIndex(0)}
-                className={`w-16 h-20 bg-secondary overflow-hidden border-2 transition-colors ${
-                  selectedImageIndex === 0 ? "border-foreground" : "border-transparent hover:border-muted-foreground"
-                }`}
-              >
-                <img
-                  src={product.imageUrl}
-                  alt="Thumbnail 1"
-                  className="w-full h-full object-cover"
-                />
-              </button>
-
-              {product.secondaryImageUrl && (
-                <button
-                  onClick={() => setSelectedImageIndex(1)}
-                  className={`w-16 h-20 bg-secondary overflow-hidden border-2 transition-colors ${
-                    selectedImageIndex === 1 ? "border-foreground" : "border-transparent hover:border-muted-foreground"
-                  }`}
-                >
-                  <img
-                    src={product.secondaryImageUrl}
-                    alt="Thumbnail 2"
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              )}
-            </div>
+            {/* Thumbnail Images - Vertical grid up to 6 */}
+            {product.imageUrls.length > 1 && (
+              <div className="flex gap-2 flex-wrap">
+                {product.imageUrls.map((imageUrl, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`w-16 h-20 bg-secondary overflow-hidden border-2 transition-colors ${
+                      selectedImageIndex === index
+                        ? "border-foreground"
+                        : "border-transparent hover:border-muted-foreground"
+                    }`}
+                  >
+                    <img
+                      src={imageUrl}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           
           {/* Product Details */}

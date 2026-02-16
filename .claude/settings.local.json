@@ -9,7 +9,10 @@
       "Bash(pkill:*)",
       "Bash(timeout 10 npm run dev:*)",
       "Bash(npm run build:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git config:*)",
+      "Bash(git commit:*)",
+      "Bash(git add:*)"
     ]
   }
 }

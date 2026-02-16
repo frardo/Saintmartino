@@ -6,6 +6,7 @@ import {
   insertPromotionSchema,
   insertCouponSchema,
   insertBannerSchema,
+  type Product,
 } from './schema';
 
 // ============================================
@@ -39,14 +40,14 @@ export const api = {
         sort: z.enum(['price_asc', 'price_desc', 'newest']).optional(),
       }).optional(),
       responses: {
-        200: z.array(z.custom<typeof products.$inferSelect>()),
+        200: z.array(z.custom<Product>()),
       },
     },
     get: {
       method: 'GET' as const,
       path: '/api/products/:id' as const,
       responses: {
-        200: z.custom<typeof products.$inferSelect>(),
+        200: z.custom<Product>(),
         404: errorSchemas.notFound,
       },
     },
@@ -55,7 +56,7 @@ export const api = {
       path: '/api/products' as const,
       input: insertProductSchema,
       responses: {
-        201: z.custom<typeof products.$inferSelect>(),
+        201: z.custom<Product>(),
         400: errorSchemas.validation,
       },
     },
@@ -64,7 +65,7 @@ export const api = {
       path: '/api/products/:id' as const,
       input: insertProductSchema.partial(),
       responses: {
-        200: z.custom<typeof products.$inferSelect>(),
+        200: z.custom<Product>(),
         404: errorSchemas.notFound,
       },
     },

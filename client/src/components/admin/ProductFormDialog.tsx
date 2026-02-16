@@ -31,6 +31,7 @@ import { insertProductSchema } from "@shared/schema";
 import type { Product, InsertProduct } from "@shared/schema";
 import { z } from "zod";
 import { useUploadFile } from "@/hooks/use-upload-file";
+import { X, Plus } from "lucide-react";
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -40,10 +41,9 @@ interface ProductFormDialogProps {
   isLoading?: boolean;
 }
 
-// Form schema without image URLs (handled by file uploads)
+// Form schema without imageUrls (handled by file uploads)
 const formSchema = insertProductSchema.omit({
-  imageUrl: true,
-  secondaryImageUrl: true,
+  imageUrls: true,
 });
 type FormSchema = z.infer<typeof formSchema>;
 
@@ -55,16 +55,11 @@ export function ProductFormDialog({
   isLoading = false,
 }: ProductFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [primaryImagePreview, setPrimaryImagePreview] = useState<string | null>(
-    product?.imageUrl || null
+  const [imagePreviews, setImagePreviews] = useState<string[]>(
+    product?.imageUrls || []
   );
-  const [secondaryImagePreview, setSecondaryImagePreview] = useState<
-    string | null
-  >(product?.secondaryImageUrl || null);
-  const [primaryImageFile, setPrimaryImageFile] = useState<File | null>(null);
-  const [secondaryImageFile, setSecondaryImageFile] = useState<File | null>(null);
-  const primaryInputRef = useRef<HTMLInputElement>(null);
-  const secondaryInputRef = useRef<HTMLInputElement>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadFile, isUploading } = useUploadFile();
 
   const form = useForm<FormSchema>({
@@ -85,62 +80,65 @@ export function ProductFormDialog({
     },
   });
 
-  const handlePrimaryImageChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPrimaryImageFile(file);
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const totalImages = imagePreviews.length + imageFiles.length + files.length;
+
+    if (totalImages > 6) {
+      alert("Maximum 6 images allowed. Please remove some images first.");
+      return;
+    }
+
+    const newFiles = files.slice(0, 6 - imagePreviews.length - imageFiles.length);
+
+    newFiles.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setPrimaryImagePreview(event.target?.result as string);
+        setImagePreviews((prev) => [...prev, event.target?.result as string]);
       };
       reader.readAsDataURL(file);
-    }
+    });
+
+    setImageFiles((prev) => [...prev, ...newFiles]);
   };
 
-  const handleSecondaryImageChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSecondaryImageFile(file);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setSecondaryImagePreview(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+  const removeImage = (index: number) => {
+    // If it's an existing image (from product), remove from previews
+    if (index < imagePreviews.length - imageFiles.length) {
+      setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      // If it's a new file, also remove from files array
+      const fileIndex = index - (imagePreviews.length - imageFiles.length);
+      setImageFiles((prev) => prev.filter((_, i) => i !== fileIndex));
+      setImagePreviews((prev) => prev.filter((_, i) => i !== index));
     }
   };
 
   const handleSubmit = async (formData: FormSchema) => {
     if (!formData) return;
+
+    // Keep existing images and upload new ones
+    let allImageUrls = [...imagePreviews];
+
     setIsSubmitting(true);
     try {
-      let primaryImageUrl = product?.imageUrl;
-      let secondaryImageUrl = product?.secondaryImageUrl || null;
-
-      // Upload primary image if changed
-      if (primaryImageFile) {
-        const uploadedUrl = await uploadFile(primaryImageFile);
+      // Upload new files
+      for (const file of imageFiles) {
+        const uploadedUrl = await uploadFile(file);
         if (!uploadedUrl) {
-          throw new Error("Failed to upload primary image");
+          throw new Error(`Failed to upload image: ${file.name}`);
         }
-        primaryImageUrl = uploadedUrl;
+        // Only add uploaded URLs, skip preview URLs that are already there
+        if (!allImageUrls.includes(uploadedUrl)) {
+          allImageUrls.push(uploadedUrl);
+        }
       }
 
-      // Upload secondary image if changed
-      if (secondaryImageFile) {
-        const uploadedUrl = await uploadFile(secondaryImageFile);
-        if (!uploadedUrl) {
-          throw new Error("Failed to upload secondary image");
-        }
-        secondaryImageUrl = uploadedUrl;
-      }
+      // Filter out data URLs (previews of new files) and keep only actual URLs
+      allImageUrls = allImageUrls.filter((url) => !url.startsWith("data:"));
 
-      // Check that we have a primary image URL
-      if (!primaryImageUrl) {
-        throw new Error("Primary image is required");
+      if (allImageUrls.length === 0) {
+        throw new Error("At least one image is required");
       }
 
       const submitData: InsertProduct = {
@@ -150,8 +148,7 @@ export function ProductFormDialog({
         type: formData.type!,
         metal: formData.metal!,
         stone: formData.stone,
-        imageUrl: primaryImageUrl,
-        secondaryImageUrl: secondaryImageUrl || undefined,
+        imageUrls: allImageUrls,
         isNew: formData.isNew ?? false,
         discountPercent: formData.discountPercent ?? 0,
         discountLabel: formData.discountLabel,
@@ -159,10 +156,8 @@ export function ProductFormDialog({
 
       await onSubmit(submitData);
       form.reset();
-      setPrimaryImagePreview(null);
-      setSecondaryImagePreview(null);
-      setPrimaryImageFile(null);
-      setSecondaryImageFile(null);
+      setImagePreviews([]);
+      setImageFiles([]);
       onOpenChange(false);
     } finally {
       setIsSubmitting(false);
@@ -302,76 +297,61 @@ export function ProductFormDialog({
               />
             </div>
 
-            {/* Primary Image Upload */}
+            {/* Images Gallery (up to 6) */}
             <FormItem>
-              <FormLabel>Primary Image *</FormLabel>
+              <FormLabel>Product Images (up to 6) *</FormLabel>
               <div className="space-y-3">
-                {primaryImagePreview && (
-                  <div className="relative overflow-hidden rounded-lg border border-border">
-                    <img
-                      src={primaryImagePreview}
-                      alt="Primary preview"
-                      className="h-48 w-full object-cover"
-                    />
-                  </div>
-                )}
-                <input
-                  ref={primaryInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePrimaryImageChange}
-                  className="hidden"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => primaryInputRef.current?.click()}
-                >
-                  {primaryImageFile ? "Change Primary Image" : "Upload Primary Image"}
-                </Button>
-                {primaryImageFile && (
-                  <p className="text-sm text-muted-foreground">
-                    {primaryImageFile.name}
-                  </p>
-                )}
-              </div>
-              <FormMessage />
-            </FormItem>
+                {/* Image Grid */}
+                <div className="grid grid-cols-3 gap-2">
+                  {imagePreviews.map((preview, index) => (
+                    <div
+                      key={index}
+                      className="relative aspect-square overflow-hidden rounded-lg border border-border bg-muted"
+                    >
+                      <img
+                        src={preview}
+                        alt={`Product ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
 
-            {/* Secondary Image Upload */}
-            <FormItem>
-              <FormLabel>Secondary Image (hover)</FormLabel>
-              <div className="space-y-3">
-                {secondaryImagePreview && (
-                  <div className="relative overflow-hidden rounded-lg border border-border">
-                    <img
-                      src={secondaryImagePreview}
-                      alt="Secondary preview"
-                      className="h-48 w-full object-cover"
-                    />
-                  </div>
-                )}
+                  {/* Add More Images Button (if less than 6) */}
+                  {imagePreviews.length < 6 && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="aspect-square rounded-lg border-2 border-dashed border-border flex items-center justify-center hover:bg-muted transition-colors"
+                    >
+                      <Plus size={32} className="text-muted-foreground" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Hidden File Input - Multiple */}
                 <input
-                  ref={secondaryInputRef}
+                  ref={fileInputRef}
                   type="file"
+                  multiple
                   accept="image/*"
-                  onChange={handleSecondaryImageChange}
+                  onChange={handleImageChange}
                   className="hidden"
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => secondaryInputRef.current?.click()}
-                >
-                  {secondaryImageFile ? "Change Secondary Image" : "Upload Secondary Image"}
-                </Button>
-                {secondaryImageFile && (
-                  <p className="text-sm text-muted-foreground">
-                    {secondaryImageFile.name}
-                  </p>
-                )}
+
+                {/* Info Text */}
+                <p className="text-xs text-muted-foreground">
+                  {imagePreviews.length} of 6 images
+                  {imagePreviews.length > 0 && (
+                    <span> • Click X to remove • Click + to add more</span>
+                  )}
+                </p>
               </div>
               <FormMessage />
             </FormItem>

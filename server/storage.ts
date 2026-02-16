@@ -7,6 +7,7 @@ import {
   banners,
   type Product,
   type InsertProduct,
+  type ProductRow,
   type SiteSetting,
   type Promotion,
   type InsertPromotion,
@@ -17,6 +18,18 @@ import {
   type ProductsQueryParams
 } from "@shared/schema";
 import { eq, and, asc, desc } from "drizzle-orm";
+
+// Helper functions for imageUrls JSON conversion
+function convertProductRow(row: ProductRow): Product {
+  return {
+    ...row,
+    imageUrls: JSON.parse(row.imageUrls),
+  };
+}
+
+function convertProductsArray(rows: ProductRow[]): Product[] {
+  return rows.map(convertProductRow);
+}
 
 export interface IStorage {
   getProducts(params?: ProductsQueryParams): Promise<Product[]>;
@@ -68,22 +81,31 @@ export class DatabaseStorage implements IStorage {
       query.orderBy(desc(products.id));
     }
 
-    return await query;
+    const rows = await query;
+    return convertProductsArray(rows);
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
-    const [product] = await db!.select().from(products).where(eq(products.id, id));
-    return product;
+    const [row] = await db!.select().from(products).where(eq(products.id, id));
+    return row ? convertProductRow(row) : undefined;
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    const [product] = await db!.insert(products).values(insertProduct).returning();
-    return product;
+    const dataToInsert = {
+      ...insertProduct,
+      imageUrls: JSON.stringify(insertProduct.imageUrls),
+    };
+    const [row] = await db!.insert(products).values(dataToInsert).returning();
+    return convertProductRow(row);
   }
 
   async updateProduct(id: number, updates: Partial<InsertProduct>): Promise<Product | undefined> {
-    const [product] = await db!.update(products).set(updates).where(eq(products.id, id)).returning();
-    return product;
+    const dataToUpdate = {
+      ...updates,
+      imageUrls: updates.imageUrls ? JSON.stringify(updates.imageUrls) : undefined,
+    };
+    const [row] = await db!.update(products).set(dataToUpdate).where(eq(products.id, id)).returning();
+    return row ? convertProductRow(row) : undefined;
   }
 
   async deleteProduct(id: number): Promise<boolean> {
@@ -161,8 +183,7 @@ export class MemoryStorage implements IStorage {
       type: insertProduct.type,
       metal: insertProduct.metal,
       stone: insertProduct.stone ?? null,
-      imageUrl: insertProduct.imageUrl,
-      secondaryImageUrl: insertProduct.secondaryImageUrl ?? null,
+      imageUrls: insertProduct.imageUrls,
       isNew: insertProduct.isNew ?? false,
       discountPercent: insertProduct.discountPercent ?? 0,
       discountLabel: insertProduct.discountLabel ?? null,

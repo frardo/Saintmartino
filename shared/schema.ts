@@ -11,8 +11,7 @@ export const products = pgTable("products", {
   type: text("type").notNull(), // Ring, Necklace, etc.
   metal: text("metal").notNull(), // Gold, Silver, etc.
   stone: text("stone"), // Diamond, Pearl, etc.
-  imageUrl: text("image_url").notNull(),
-  secondaryImageUrl: text("secondary_image_url"),
+  imageUrls: text("image_urls").notNull(), // JSON array of image URLs
   isNew: boolean("is_new").default(false),
   discountPercent: integer("discount_percent").default(0),
   discountLabel: text("discount_label"),
@@ -56,15 +55,31 @@ export const banners = pgTable("banners", {
 });
 
 // === BASE SCHEMAS ===
-export const insertProductSchema = createInsertSchema(products).omit({ id: true });
+// Custom schema for products with imageUrls as array (converted to JSON string for storage)
+export const insertProductSchema = z.object({
+  name: z.string().min(1, "Product name is required"),
+  description: z.string().optional(),
+  price: z.coerce.string(), // Keep as string for decimal
+  type: z.string().min(1, "Product type is required"),
+  metal: z.string().min(1, "Metal is required"),
+  stone: z.string().optional(),
+  imageUrls: z.array(z.string().url("Invalid image URL")).min(1, "At least one image is required").max(6, "Maximum 6 images allowed"),
+  isNew: z.boolean().optional(),
+  discountPercent: z.coerce.number().min(0).max(100).optional(),
+  discountLabel: z.string().optional(),
+});
 export const insertSiteSettingSchema = createInsertSchema(siteSettings).omit({ id: true });
 export const insertPromotionSchema = createInsertSchema(promotions).omit({ id: true });
 export const insertCouponSchema = createInsertSchema(coupons).omit({ id: true });
 export const insertBannerSchema = createInsertSchema(banners).omit({ id: true });
 
 // === EXPLICIT API CONTRACT TYPES ===
-export type Product = typeof products.$inferSelect;
-export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type ProductRow = typeof products.$inferSelect;
+export type InsertProductInput = z.infer<typeof insertProductSchema>;
+
+// Helper type for product API response (imageUrls as array)
+export type Product = Omit<ProductRow, 'imageUrls'> & { imageUrls: string[] };
+export type InsertProduct = InsertProductInput;
 export type SiteSetting = typeof siteSettings.$inferSelect;
 export type InsertSiteSetting = z.infer<typeof insertSiteSettingSchema>;
 export type Promotion = typeof promotions.$inferSelect;
