@@ -222,32 +222,40 @@ export async function registerRoutes(
     res.json({ success: true });
   });
 
-  // Reset and seed endpoint (dev only)
-  app.post("/api/admin/reset-products", async (req, res) => {
+  // Clear all products endpoint (dev only)
+  app.post("/api/admin/clear-products", async (req, res) => {
     try {
       if (process.env.NODE_ENV !== "development") {
         return res.status(403).json({ message: "Not available in production" });
       }
 
-      // Get all products and delete them
+      // Delete all products
       const products = await storage.getProducts();
       for (const product of products) {
         await storage.deleteProduct(product.id);
       }
 
-      // Reseed
-      await seedDatabaseForced();
-      res.json({ message: "Products reset and reseeded successfully" });
+      res.json({ message: `Deleted ${products.length} products. Database is now empty.` });
     } catch (err) {
-      console.error("Error resetting products:", err);
-      res.status(500).json({ message: "Error resetting products" });
+      console.error("Error clearing products:", err);
+      res.status(500).json({ message: "Error clearing products" });
     }
   });
 
-  // Seed data route (internal use or auto-run)
-  await seedDatabase();
+  // Seed only site settings (not products - they should be added manually)
+  await seedSiteSettings();
 
   return httpServer;
+}
+
+async function seedSiteSettings() {
+  const existingSettings = await storage.getSiteSettings();
+  if (existingSettings.length === 0) {
+    await storage.upsertSiteSetting('hero_title', 'Modern Heirlooms');
+    await storage.upsertSiteSetting('hero_subtitle', 'Timeless jewelry designed to be lived in. Ethically sourced 14k gold and sterling silver.');
+    await storage.upsertSiteSetting('hero_image', 'https://pixabay.com/get/gc50e991d87e6b90338e1db8a536d5858c26ed48ab4dfd250fb387bb85d7a33116b296a6303e8e3fcc45d5baef9694c54ffb2ec6d5fbd0aba6d004699ddb064a9_1280.jpg');
+    console.log("Seeded database with site settings");
+  }
 }
 
 async function seedDatabase() {
@@ -332,14 +340,6 @@ async function seedDatabase() {
       await storage.createProduct(watch);
     }
     console.log("Seeded database with watch products");
-  }
-
-  const existingSettings = await storage.getSiteSettings();
-  if (existingSettings.length === 0) {
-    await storage.upsertSiteSetting('hero_title', 'Modern Heirlooms');
-    await storage.upsertSiteSetting('hero_subtitle', 'Timeless jewelry designed to be lived in. Ethically sourced 14k gold and sterling silver.');
-    await storage.upsertSiteSetting('hero_image', 'https://pixabay.com/get/gc50e991d87e6b90338e1db8a536d5858c26ed48ab4dfd250fb387bb85d7a33116b296a6303e8e3fcc45d5baef9694c54ffb2ec6d5fbd0aba6d004699ddb064a9_1280.jpg');
-    console.log("Seeded database with site settings");
   }
 }
 
