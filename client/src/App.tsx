@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import ProductDetail from "@/pages/ProductDetail";
+import Cart from "@/pages/Cart";
 import Admin from "@/pages/Admin";
 import { Settings } from "lucide-react";
 
@@ -15,6 +16,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/shop" component={Home} />
       <Route path="/product/:id" component={ProductDetail} />
+      <Route path="/cart" component={Cart} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>

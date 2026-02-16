@@ -1,5 +1,6 @@
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { useProduct } from "@/hooks/use-products";
+import { useCart } from "@/hooks/use-cart";
 import { Header } from "@/components/Header";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { useState } from "react";
@@ -11,14 +12,17 @@ import { Badge } from "@/components/ui/badge";
 
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
+  const [, setLocation] = useLocation();
   const id = params?.id ? parseInt(params.id) : 0;
   const { data: product, isLoading, error } = useProduct(id);
+  const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [cep, setCep] = useState("");
   const [shippingInfo, setShippingInfo] = useState<{ prazo: string; valor: string } | null>(null);
   const [shippingError, setShippingError] = useState("");
   const [loadingCep, setLoadingCep] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   const formatCep = (value: string) => {
     const cleaned = value.replace(/\D/g, "");
@@ -271,17 +275,34 @@ export default function ProductDetail() {
               </div>
 
               <button
-                onClick={() => alert("Redirecionando para checkout...")}
+                onClick={() => {
+                  if (product) {
+                    addItem(product, quantity);
+                    setAddedToCart(true);
+                    setTimeout(() => setAddedToCart(false), 2000);
+                    setLocation("/cart");
+                  }
+                }}
                 className="w-full bg-white text-black border-2 border-black py-4 text-sm uppercase tracking-widest font-bold hover:bg-black hover:text-white transition-colors"
               >
                 Comprar Agora
               </button>
 
               <button
-                onClick={() => alert("Adicionado ao carrinho!")}
-                className="w-full bg-[#262626] text-white py-4 text-sm uppercase tracking-widest font-bold hover:bg-black transition-colors shadow-lg shadow-black/5"
+                onClick={() => {
+                  if (product) {
+                    addItem(product, quantity);
+                    setAddedToCart(true);
+                    setTimeout(() => setAddedToCart(false), 3000);
+                  }
+                }}
+                className={`w-full py-4 text-sm uppercase tracking-widest font-bold transition-colors shadow-lg shadow-black/5 ${
+                  addedToCart
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "bg-[#262626] text-white hover:bg-black"
+                }`}
               >
-                Adicionar ao Carrinho - R$ {(Number(product.price) * quantity).toFixed(2)}
+                {addedToCart ? "✓ Adicionado ao Carrinho!" : `Adicionar ao Carrinho - R$ ${(Number(product.price) * quantity).toFixed(2)}`}
               </button>
 
               <p className="text-xs text-center text-muted-foreground">

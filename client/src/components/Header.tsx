@@ -1,7 +1,11 @@
 import { Link } from "wouter";
 import { ShoppingBag, Search, Menu } from "lucide-react";
+import { useCart } from "@/hooks/use-cart";
 
 export function Header() {
+  const { items } = useCart();
+  const cartItemCount = items.length;
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -29,10 +33,14 @@ export function Header() {
           <button className="p-2 hover:bg-black/5 rounded-full transition-colors">
             <Search className="h-5 w-5" />
           </button>
-          <button className="p-2 hover:bg-black/5 rounded-full transition-colors relative">
+          <Link href="/cart" className="p-2 hover:bg-black/5 rounded-full transition-colors relative block">
             <ShoppingBag className="h-5 w-5" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-primary rounded-full ring-2 ring-background" />
-          </button>
+            {cartItemCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 h-5 w-5 bg-primary rounded-full ring-2 ring-background flex items-center justify-center text-xs font-bold text-white">
+                {cartItemCount}
+              </span>
+            )}
+          </Link>
         </div>
       </div>
     </header>
