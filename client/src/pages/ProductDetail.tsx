@@ -3,7 +3,7 @@ import { useProduct } from "@/hooks/use-products";
 import { Header } from "@/components/Header";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
@@ -72,16 +72,18 @@ export default function ProductDetail() {
               animate={{ opacity: 1, scale: 1 }}
               className="aspect-[3/4] md:aspect-square bg-secondary relative overflow-hidden group flex-1"
             >
-              <motion.img
-                key={selectedImageIndex}
-                src={product.imageUrls[selectedImageIndex]}
-                alt={product.name}
-                className="w-full h-full object-cover"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-              />
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={selectedImageIndex}
+                  src={product.imageUrls[selectedImageIndex]}
+                  alt={product.name}
+                  className="w-full h-full object-cover absolute inset-0"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                />
+              </AnimatePresence>
             </motion.div>
           </div>
           
