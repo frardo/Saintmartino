@@ -102,7 +102,7 @@ export default function ProductDetail() {
             
             <div className="prose prose-sm text-muted-foreground mb-10 max-w-md">
               <p>
-                Fabricado em {product.metal}, este {product.type.toLowerCase()} é projetado
+                Fabricado em {product.metal}, este {product.type?.toLowerCase()} é projetado
                 para ser uma adição atemporal à sua coleção.
                 {product.isNew && " Parte de nosso lançamento de coleção mais recente."}
               </p>
