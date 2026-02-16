@@ -104,15 +104,17 @@ export function ProductFormDialog({
   };
 
   const removeImage = (index: number) => {
-    // If it's an existing image (from product), remove from previews
-    if (index < imagePreviews.length - imageFiles.length) {
-      setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-    } else {
-      // If it's a new file, also remove from files array
-      const fileIndex = index - (imagePreviews.length - imageFiles.length);
+    if (index >= imagePreviews.length) return;
+
+    // If it's a new file, also remove from files array
+    const newFilesStartIndex = imagePreviews.length - imageFiles.length;
+    if (index >= newFilesStartIndex) {
+      const fileIndex = index - newFilesStartIndex;
       setImageFiles((prev) => prev.filter((_, i) => i !== fileIndex));
-      setImagePreviews((prev) => prev.filter((_, i) => i !== index));
     }
+
+    // Remove from previews
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleDragStart = (index: number) => {
@@ -178,21 +180,18 @@ export function ProductFormDialog({
       // Filter out data URLs (previews of new files) and keep only actual URLs
       allImageUrls = allImageUrls.filter((url) => !url.startsWith("data:"));
 
-      if (allImageUrls.length === 0) {
-        throw new Error("At least one image is required");
-      }
-
+      // Build submit data with only non-empty fields
       const submitData: InsertProduct = {
-        name: formData.name!,
-        description: formData.description,
-        price: formData.price!,
-        type: formData.type!,
-        metal: formData.metal!,
-        stone: formData.stone,
-        imageUrls: allImageUrls,
+        name: formData.name || undefined,
+        description: formData.description || undefined,
+        price: formData.price || undefined,
+        type: formData.type || undefined,
+        metal: formData.metal || undefined,
+        stone: formData.stone || undefined,
+        imageUrls: allImageUrls.length > 0 ? allImageUrls : undefined,
         isNew: formData.isNew ?? false,
         discountPercent: formData.discountPercent ?? 0,
-        discountLabel: formData.discountLabel,
+        discountLabel: formData.discountLabel || undefined,
       };
 
       await onSubmit(submitData);
@@ -219,7 +218,7 @@ export function ProductFormDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Product Name *</FormLabel>
+                  <FormLabel>Product Name</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g. The Curve Ring" {...field} />
                   </FormControl>
@@ -248,7 +247,7 @@ export function ProductFormDialog({
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price *</FormLabel>
+                    <FormLabel>Price</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -267,7 +266,7 @@ export function ProductFormDialog({
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Type *</FormLabel>
+                    <FormLabel>Type</FormLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
@@ -293,7 +292,7 @@ export function ProductFormDialog({
                 name="metal"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Metal *</FormLabel>
+                    <FormLabel>Metal</FormLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
@@ -340,7 +339,7 @@ export function ProductFormDialog({
 
             {/* Images Gallery (up to 6) */}
             <FormItem>
-              <FormLabel>Product Images (up to 6) *</FormLabel>
+              <FormLabel>Product Images (up to 6)</FormLabel>
               <div className="space-y-3">
                 {/* Image Grid */}
                 <div className="grid grid-cols-3 gap-2">

@@ -5,13 +5,13 @@ import { z } from "zod";
 // === TABLE DEFINITIONS ===
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull(),
+  name: text("name"),
   description: text("description"),
-  price: decimal("price").notNull(),
-  type: text("type").notNull(), // Ring, Necklace, etc.
-  metal: text("metal").notNull(), // Gold, Silver, etc.
+  price: decimal("price"),
+  type: text("type"), // Ring, Necklace, etc.
+  metal: text("metal"), // Gold, Silver, etc.
   stone: text("stone"), // Diamond, Pearl, etc.
-  imageUrls: text("image_urls").notNull(), // JSON array of image URLs
+  imageUrls: text("image_urls"), // JSON array of image URLs
   isNew: boolean("is_new").default(false),
   discountPercent: integer("discount_percent").default(0),
   discountLabel: text("discount_label"),
@@ -56,14 +56,15 @@ export const banners = pgTable("banners", {
 
 // === BASE SCHEMAS ===
 // Custom schema for products with imageUrls as array (converted to JSON string for storage)
+// All fields optional - empty fields won't appear on product
 export const insertProductSchema = z.object({
-  name: z.string().min(1, "Product name is required"),
+  name: z.string().optional(),
   description: z.string().optional(),
-  price: z.coerce.string(), // Keep as string for decimal
-  type: z.string().min(1, "Product type is required"),
-  metal: z.string().min(1, "Metal is required"),
+  price: z.coerce.string().optional(), // Keep as string for decimal
+  type: z.string().optional(),
+  metal: z.string().optional(),
   stone: z.string().optional(),
-  imageUrls: z.array(z.string().url("Invalid image URL")).min(1, "At least one image is required").max(6, "Maximum 6 images allowed"),
+  imageUrls: z.array(z.string()).optional().default([]),
   isNew: z.boolean().optional(),
   discountPercent: z.coerce.number().min(0).max(100).optional(),
   discountLabel: z.string().optional(),
