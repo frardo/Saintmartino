@@ -51,18 +51,28 @@ export async function registerRoutes(
 
   // File upload endpoint
   app.post("/api/upload", (req, res) => {
+    console.log("=== UPLOAD REQUEST RECEIVED ===");
+    console.log("Headers:", req.headers);
+
     upload.single("file")(req, res, (err) => {
       if (err) {
         console.error("Multer error:", err);
-        return res.status(400).json({ message: `Upload error: ${err.message}` });
+        const errorResponse = { message: `Upload error: ${err.message}` };
+        console.log("Sending error response:", errorResponse);
+        res.status(400).json(errorResponse);
+        return;
       }
 
       if (!req.file) {
         console.error("No file in request");
-        return res.status(400).json({ message: "No file provided" });
+        const errorResponse = { message: "No file provided" };
+        console.log("Sending error response:", errorResponse);
+        res.status(400).json(errorResponse);
+        return;
       }
 
       const fileUrl = `/images/${req.file.filename}`;
+      const successResponse = { url: fileUrl };
       console.log("File uploaded successfully:", {
         filename: req.file.filename,
         originalname: req.file.originalname,
@@ -71,7 +81,8 @@ export async function registerRoutes(
         path: req.file.path,
         url: fileUrl,
       });
-      res.status(201).json({ url: fileUrl });
+      console.log("Sending success response:", successResponse);
+      res.status(201).json(successResponse);
     });
   });
 
