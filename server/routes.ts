@@ -3,12 +3,53 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import multer from "multer";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Configure multer for file uploads
+const uploadDir = path.join(__dirname, "../public/images");
+const storage_multer = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage: storage_multer,
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed."));
+    }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB max
+  },
+});
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
+
+  // File upload endpoint
+  app.post("/api/upload", upload.single("file"), (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file provided" });
+    }
+    const fileUrl = `/images/${req.file.filename}`;
+    res.status(201).json({ url: fileUrl });
+  });
+
   app.get(api.products.list.path, async (req, res) => {
     const params = api.products.list.input?.parse(req.query);
     const products = await storage.getProducts(params);
@@ -21,6 +62,118 @@ export async function registerRoutes(
       return res.status(404).json({ message: 'Product not found' });
     }
     res.json(product);
+  });
+
+  app.post(api.products.create.path, async (req, res) => {
+    const parsed = api.products.create.input.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.message });
+    }
+    const product = await storage.createProduct(parsed.data);
+    res.status(201).json(product);
+  });
+
+  app.patch(api.products.update.path, async (req, res) => {
+    const parsed = api.products.update.input.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.message });
+    }
+    const product = await storage.updateProduct(Number(req.params.id), parsed.data);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    res.json(product);
+  });
+
+  app.delete(api.products.delete.path, async (req, res) => {
+    const deleted = await storage.deleteProduct(Number(req.params.id));
+    if (!deleted) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    res.json({ success: true });
+  });
+
+  app.get(api.siteSettings.list.path, async (_req, res) => {
+    const settings = await storage.getSiteSettings();
+    res.json(settings);
+  });
+
+  app.put(api.siteSettings.update.path, async (req, res) => {
+    const parsed = api.siteSettings.update.input.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.message });
+    }
+    const setting = await storage.upsertSiteSetting(req.params.key, parsed.data.value);
+    res.json(setting);
+  });
+
+  // Promotions
+  app.get(api.promotions.list.path, async (_req, res) => {
+    const promos = await storage.getPromotions();
+    res.json(promos);
+  });
+
+  app.post(api.promotions.create.path, async (req, res) => {
+    const parsed = api.promotions.create.input.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.message });
+    }
+    const promo = await storage.createPromotion(parsed.data);
+    res.status(201).json(promo);
+  });
+
+  app.delete(api.promotions.delete.path, async (req, res) => {
+    const deleted = await storage.deletePromotion(Number(req.params.id));
+    if (!deleted) {
+      return res.status(404).json({ message: 'Promotion not found' });
+    }
+    res.json({ success: true });
+  });
+
+  // Coupons
+  app.get(api.coupons.list.path, async (_req, res) => {
+    const coupons = await storage.getCoupons();
+    res.json(coupons);
+  });
+
+  app.post(api.coupons.create.path, async (req, res) => {
+    const parsed = api.coupons.create.input.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.message });
+    }
+    const coupon = await storage.createCoupon(parsed.data);
+    res.status(201).json(coupon);
+  });
+
+  app.delete(api.coupons.delete.path, async (req, res) => {
+    const deleted = await storage.deleteCoupon(Number(req.params.id));
+    if (!deleted) {
+      return res.status(404).json({ message: 'Coupon not found' });
+    }
+    res.json({ success: true });
+  });
+
+  // Banners
+  app.get(api.banners.list.path, async (_req, res) => {
+    const bannersList = await storage.getBanners();
+    res.json(bannersList);
+  });
+
+  app.post(api.banners.create.path, async (req, res) => {
+    const parsed = api.banners.create.input.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.message });
+    }
+    const banner = await storage.createBanner(parsed.data);
+    res.status(201).json(banner);
+  });
+
+  app.delete(api.banners.delete.path, async (req, res) => {
+    const deleted = await storage.deleteBanner(Number(req.params.id));
+    if (!deleted) {
+      return res.status(404).json({ message: 'Banner not found' });
+    }
+    res.json({ success: true });
   });
 
   // Seed data route (internal use or auto-run)
@@ -99,5 +252,13 @@ async function seedDatabase() {
       await storage.createProduct(ring);
     }
     console.log("Seeded database with products");
+  }
+
+  const existingSettings = await storage.getSiteSettings();
+  if (existingSettings.length === 0) {
+    await storage.upsertSiteSetting('hero_title', 'Modern Heirlooms');
+    await storage.upsertSiteSetting('hero_subtitle', 'Timeless jewelry designed to be lived in. Ethically sourced 14k gold and sterling silver.');
+    await storage.upsertSiteSetting('hero_image', 'https://pixabay.com/get/gc50e991d87e6b90338e1db8a536d5858c26ed48ab4dfd250fb387bb85d7a33116b296a6303e8e3fcc45d5baef9694c54ffb2ec6d5fbd0aba6d004699ddb064a9_1280.jpg');
+    console.log("Seeded database with site settings");
   }
 }

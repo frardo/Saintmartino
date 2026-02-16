@@ -62,24 +62,44 @@ export function ProductCard({ product }: ProductCardProps) {
       </div>
 
       <div className="space-y-1">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start gap-4">
           <h3 className="font-serif text-lg leading-tight text-foreground group-hover:underline decoration-1 underline-offset-4 decoration-primary/50">
             {product.name}
           </h3>
-          <span className="font-sans text-sm text-muted-foreground ml-4">
-            ${Number(product.price).toFixed(2)}
-          </span>
-        </div>
-        
-        <div className="flex items-center gap-2 pt-1">
-          {/* Metal Swatches Mockup - Assuming generic variation logic for UI purposes */}
-          <div className="flex gap-1">
-            <div className="w-3 h-3 rounded-full bg-[#E5D0A1] border border-black/10" title="Gold" />
-            <div className="w-3 h-3 rounded-full bg-[#E0E0E0] border border-black/10" title="Silver" />
+          <div className="flex flex-col items-end gap-1 ml-4">
+            {product.discountPercent > 0 ? (
+              <>
+                <span className="font-sans text-sm text-muted-foreground line-through">
+                  ${Number(product.price).toFixed(2)}
+                </span>
+                <span className="font-sans text-sm font-semibold text-foreground">
+                  ${(Number(product.price) * (1 - product.discountPercent / 100)).toFixed(2)}
+                </span>
+              </>
+            ) : (
+              <span className="font-sans text-sm text-muted-foreground">
+                ${Number(product.price).toFixed(2)}
+              </span>
+            )}
           </div>
-          <span className="text-xs text-muted-foreground pl-1">
-            {product.metal}
-          </span>
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-2">
+            {/* Metal Swatches Mockup - Assuming generic variation logic for UI purposes */}
+            <div className="flex gap-1">
+              <div className="w-3 h-3 rounded-full bg-[#E5D0A1] border border-black/10" title="Gold" />
+              <div className="w-3 h-3 rounded-full bg-[#E0E0E0] border border-black/10" title="Silver" />
+            </div>
+            <span className="text-xs text-muted-foreground pl-1">
+              {product.metal}
+            </span>
+          </div>
+          {product.discountPercent > 0 && product.discountLabel && (
+            <span className="text-xs bg-red-100 text-red-700 px-2 py-1">
+              {product.discountLabel}
+            </span>
+          )}
         </div>
       </div>
     </Link>

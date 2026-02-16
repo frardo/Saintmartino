@@ -10,6 +10,7 @@ export default function ProductDetail() {
   const id = params?.id ? parseInt(params.id) : 0;
   const { data: product, isLoading, error } = useProduct(id);
   const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   if (isLoading) {
     return (
@@ -39,19 +40,57 @@ export default function ProductDetail() {
       
       <main className="container mx-auto px-4 py-12 md:py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
-          
-          {/* Product Image */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="aspect-[3/4] md:aspect-square bg-secondary relative overflow-hidden group"
-          >
-            <img 
-              src={product.imageUrl} 
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-          </motion.div>
+
+          {/* Product Images Gallery */}
+          <div className="flex flex-col gap-4">
+            {/* Main Image */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="aspect-[3/4] md:aspect-square bg-secondary relative overflow-hidden group"
+            >
+              <motion.img
+                key={selectedImageIndex}
+                src={selectedImageIndex === 0 ? product.imageUrl : product.secondaryImageUrl || product.imageUrl}
+                alt={product.name}
+                className="w-full h-full object-cover"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              />
+            </motion.div>
+
+            {/* Thumbnail Images */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSelectedImageIndex(0)}
+                className={`w-16 h-20 bg-secondary overflow-hidden border-2 transition-colors ${
+                  selectedImageIndex === 0 ? "border-foreground" : "border-transparent hover:border-muted-foreground"
+                }`}
+              >
+                <img
+                  src={product.imageUrl}
+                  alt="Thumbnail 1"
+                  className="w-full h-full object-cover"
+                />
+              </button>
+
+              {product.secondaryImageUrl && (
+                <button
+                  onClick={() => setSelectedImageIndex(1)}
+                  className={`w-16 h-20 bg-secondary overflow-hidden border-2 transition-colors ${
+                    selectedImageIndex === 1 ? "border-foreground" : "border-transparent hover:border-muted-foreground"
+                  }`}
+                >
+                  <img
+                    src={product.secondaryImageUrl}
+                    alt="Thumbnail 2"
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              )}
+            </div>
+          </div>
           
           {/* Product Details */}
           <div className="flex flex-col pt-4 md:pt-12">

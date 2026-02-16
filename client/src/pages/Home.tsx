@@ -5,6 +5,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { LifestyleCard } from "@/components/LifestyleCard";
 import { FilterBar } from "@/components/FilterBar";
 import { useProducts } from "@/hooks/use-products";
+import { useSiteSettings } from "@/hooks/use-admin";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -17,6 +18,11 @@ export default function Home() {
   });
 
   const { data: products, isLoading, error } = useProducts(filters);
+  const { data: settings } = useSiteSettings();
+
+  const heroTitle = settings?.find(s => s.key === 'hero_title')?.value || 'Modern Heirlooms';
+  const heroSubtitle = settings?.find(s => s.key === 'hero_subtitle')?.value || 'Timeless jewelry designed to be lived in. Ethically sourced 14k gold and sterling silver.';
+  const heroImage = settings?.find(s => s.key === 'hero_image')?.value || 'https://pixabay.com/get/gc50e991d87e6b90338e1db8a536d5858c26ed48ab4dfd250fb387bb85d7a33116b296a6303e8e3fcc45d5baef9694c54ffb2ec6d5fbd0aba6d004699ddb064a9_1280.jpg';
 
   const container = {
     hidden: { opacity: 0 },
@@ -55,21 +61,18 @@ export default function Home() {
         {/* Hero Section */}
         <section className="relative h-[60vh] w-full bg-[#EAE8E4] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0">
-             {/* Descriptive comment for Unsplash URL */}
-            {/* Minimalist jewelry flatlay on silk */}
-            <img 
-              src="https://pixabay.com/get/gc50e991d87e6b90338e1db8a536d5858c26ed48ab4dfd250fb387bb85d7a33116b296a6303e8e3fcc45d5baef9694c54ffb2ec6d5fbd0aba6d004699ddb064a9_1280.jpg"
+            <img
+              src={heroImage}
               alt="Hero Background"
               className="w-full h-full object-cover opacity-80"
             />
           </div>
           <div className="relative z-10 text-center space-y-4 px-4">
             <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl tracking-tight text-foreground/90">
-              Modern Heirlooms
+              {heroTitle}
             </h1>
             <p className="font-sans text-lg md:text-xl text-foreground/70 max-w-lg mx-auto">
-              Timeless jewelry designed to be lived in. 
-              Ethically sourced 14k gold and sterling silver.
+              {heroSubtitle}
             </p>
           </div>
         </section>
