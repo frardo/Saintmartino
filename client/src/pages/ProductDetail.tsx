@@ -4,6 +4,10 @@ import { Header } from "@/components/Header";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
@@ -11,6 +15,55 @@ export default function ProductDetail() {
   const { data: product, isLoading, error } = useProduct(id);
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [cep, setCep] = useState("");
+  const [shippingInfo, setShippingInfo] = useState<{ prazo: string; valor: string } | null>(null);
+  const [shippingError, setShippingError] = useState("");
+  const [loadingCep, setLoadingCep] = useState(false);
+
+  const formatCep = (value: string) => {
+    const cleaned = value.replace(/\D/g, "");
+    if (cleaned.length <= 5) return cleaned;
+    return `${cleaned.slice(0, 5)}-${cleaned.slice(5, 8)}`;
+  };
+
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCep(formatCep(e.target.value));
+    setShippingError("");
+  };
+
+  const calculateShipping = async () => {
+    const cleanedCep = cep.replace(/\D/g, "");
+    if (cleanedCep.length !== 8) {
+      setShippingError("CEP deve ter 8 dígitos");
+      return;
+    }
+
+    setLoadingCep(true);
+    setShippingError("");
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanedCep}/json/`);
+      const data = await response.json();
+
+      if (data.erro) {
+        setShippingError("CEP não encontrado");
+        setShippingInfo(null);
+      } else {
+        // Determine region from UF (state code) and estimate shipping
+        const uf = data.uf;
+        const sudesteSul = ["SP", "RJ", "MG", "ES", "PR", "SC", "RS"];
+        const valor = sudesteSul.includes(uf) ? "R$ 18,90" : "R$ 29,90";
+        setShippingInfo({
+          prazo: "5-8 dias úteis",
+          valor: valor,
+        });
+      }
+    } catch (err) {
+      setShippingError("Erro ao validar CEP. Tente novamente.");
+      setShippingInfo(null);
+    } finally {
+      setLoadingCep(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -94,20 +147,62 @@ export default function ProductDetail() {
                 {product.metal} {product.stone && `• ${product.stone}`}
               </span>
             </div>
-            
+
             <h1 className="font-serif text-3xl md:text-5xl mb-4 text-foreground">
               {product.name}
             </h1>
-            
+
             <p className="font-sans text-xl md:text-2xl mb-8">
               R$ {Number(product.price).toFixed(2)}
             </p>
-            
+
+            <Separator className="mb-8" />
+
+            {/* Specifications Section */}
+            <div className="mb-8 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Material:</span>
+                <span className="font-medium">{product.metal}</span>
+              </div>
+              {product.type && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Tipo:</span>
+                  <span className="font-medium">{product.type}</span>
+                </div>
+              )}
+              {product.stone && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Pedra:</span>
+                  <span className="font-medium">{product.stone}</span>
+                </div>
+              )}
+              {product.discountPercent > 0 && (
+                <div className="flex justify-between text-sm items-center">
+                  <span className="text-muted-foreground">Desconto:</span>
+                  <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+                    {product.discountPercent}% OFF
+                  </Badge>
+                </div>
+              )}
+              {product.isNew && (
+                <div className="flex justify-between text-sm items-center">
+                  <span className="text-muted-foreground">Condição:</span>
+                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+                    Novo
+                  </Badge>
+                </div>
+              )}
+            </div>
+
+            <Separator className="mb-8" />
+
+            {/* Description Section */}
             <div className="prose prose-sm text-muted-foreground mb-10 max-w-md">
               <p>
-                Fabricado em {product.metal}, este {product.type?.toLowerCase()} é projetado
-                para ser uma adição atemporal à sua coleção.
-                {product.isNew && " Parte de nosso lançamento de coleção mais recente."}
+                {product.description ||
+                  `Fabricado em ${product.metal}, este ${product.type?.toLowerCase()} é projetado
+                  para ser uma adição atemporal à sua coleção.
+                  ${product.isNew ? " Parte de nosso lançamento de coleção mais recente." : ""}`}
               </p>
               <ul className="mt-4 list-disc pl-4 space-y-1">
                 <li>Materiais eticamente fornecidos</li>
@@ -115,8 +210,47 @@ export default function ProductDetail() {
                 <li>Certificado de autenticidade</li>
               </ul>
             </div>
-            
-            <div className="flex flex-col gap-6 max-w-sm">
+
+            <Separator className="mb-8" />
+
+            {/* Shipping Calculator */}
+            <div className="mb-8 space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="Seu CEP"
+                  value={cep}
+                  onChange={handleCepChange}
+                  maxLength={9}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={calculateShipping}
+                  disabled={loadingCep}
+                  variant="outline"
+                  className="px-4"
+                >
+                  {loadingCep ? "..." : "Calcular"}
+                </Button>
+              </div>
+              {shippingError && (
+                <p className="text-xs text-destructive">{shippingError}</p>
+              )}
+              {shippingInfo && (
+                <div className="text-sm">
+                  <p className="text-muted-foreground">
+                    Prazo: <span className="font-medium text-foreground">{shippingInfo.prazo}</span>
+                  </p>
+                  <p className="text-muted-foreground">
+                    Frete: <span className="font-medium text-foreground">{shippingInfo.valor}</span>
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <Separator className="mb-8" />
+
+            <div className="flex flex-col gap-4 max-w-sm">
               <div className="flex items-center justify-between border border-border p-3">
                 <span className="text-sm font-medium">Quantidade</span>
                 <div className="flex items-center gap-4">
@@ -135,6 +269,13 @@ export default function ProductDetail() {
                   </button>
                 </div>
               </div>
+
+              <button
+                onClick={() => alert("Redirecionando para checkout...")}
+                className="w-full bg-white text-black border-2 border-black py-4 text-sm uppercase tracking-widest font-bold hover:bg-black hover:text-white transition-colors"
+              >
+                Comprar Agora
+              </button>
 
               <button
                 onClick={() => alert("Adicionado ao carrinho!")}
