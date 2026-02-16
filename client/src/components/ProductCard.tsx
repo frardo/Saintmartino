@@ -11,7 +11,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <Link href={`/product/R${product.id}`} className="group block cursor-pointer">
+    <Link href={`/product/${product.id}`} className="group block cursor-pointer">
       <div 
         className="relative aspect-[3/4] overflow-hidden bg-secondary mb-4"
         onMouseEnter={() => setIsHovered(true)}
@@ -39,7 +39,7 @@ export function ProductCard({ product }: ProductCardProps) {
         {product.imageUrls.length > 1 && (
           <motion.img
             src={product.imageUrls[1]}
-            alt={`R${product.name} alternate view`}
+            alt={`${product.name} alternate view`}
             className="absolute inset-0 h-full w-full object-cover object-center"
             initial={{ opacity: 0 }}
             animate={{
