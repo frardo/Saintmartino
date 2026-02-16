@@ -14,10 +14,10 @@ interface FilterBarProps {
 
 export function FilterBar({ activeType, onTypeChange, activeSort, onSortChange }: FilterBarProps) {
   const types: FilterOption[] = [
-    { label: "All Jewelry", value: "" },
-    { label: "Rings", value: "Ring" },
-    { label: "Necklaces", value: "Necklace" },
-    { label: "Earrings", value: "Earring" },
+    { label: "Todos", value: "" },
+    { label: "Relógio de Pulso", value: "Relógio de Pulso" },
+    { label: "Relógio de Bolso", value: "Relógio de Bolso" },
+    { label: "Pulseiras", value: "Pulseira" },
   ];
 
   return (
@@ -50,24 +50,25 @@ export function FilterBar({ activeType, onTypeChange, activeSort, onSortChange }
             </button>
             {/* Simple dropdown mockup */}
             <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-border p-2 hidden group-hover:block shadow-lg z-50">
-              <div className="text-xs uppercase text-muted-foreground p-2 font-semibold">By Metal</div>
-              <div className="px-2 py-1 hover:bg-secondary cursor-pointer">14k Gold</div>
-              <div className="px-2 py-1 hover:bg-secondary cursor-pointer">Sterling Silver</div>
+              <div className="text-xs uppercase text-muted-foreground p-2 font-semibold">Por Material</div>
+              <div className="px-2 py-1 hover:bg-secondary cursor-pointer">Ouro</div>
+              <div className="px-2 py-1 hover:bg-secondary cursor-pointer">Prata</div>
+              <div className="px-2 py-1 hover:bg-secondary cursor-pointer">Aço Inoxidável</div>
             </div>
           </div>
 
           <div className="h-4 w-px bg-border" />
 
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground hidden sm:inline">Sort by:</span>
-            <select 
+            <span className="text-muted-foreground hidden sm:inline">Ordenar:</span>
+            <select
               value={activeSort}
               onChange={(e) => onSortChange(e.target.value)}
               className="bg-transparent border-none focus:ring-0 text-sm font-medium cursor-pointer pr-8"
             >
-              <option value="newest">Newest</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
+              <option value="newest">Mais recentes</option>
+              <option value="price_asc">Menor preço</option>
+              <option value="price_desc">Maior preço</option>
             </select>
           </div>
         </div>

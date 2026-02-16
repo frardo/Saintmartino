@@ -12,9 +12,9 @@ export function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium tracking-wide">
-          <Link href="/shop" className="hover:text-primary transition-colors">Shop All</Link>
-          <Link href="/new" className="hover:text-primary transition-colors">New Arrivals</Link>
-          <Link href="/rings" className="hover:text-primary transition-colors">Rings</Link>
+          <Link href="/shop" className="hover:text-primary transition-colors">Todos</Link>
+          <Link href="/new" className="hover:text-primary transition-colors">Novos</Link>
+          <Link href="/watches" className="hover:text-primary transition-colors">Relógios</Link>
         </nav>
 
         {/* Logo */}

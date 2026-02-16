@@ -20,8 +20,8 @@ export default function Home() {
   const { data: products, isLoading, error } = useProducts(filters);
   const { data: settings } = useSiteSettings();
 
-  const heroTitle = settings?.find(s => s.key === 'hero_title')?.value || 'Modern Heirlooms';
-  const heroSubtitle = settings?.find(s => s.key === 'hero_subtitle')?.value || 'Timeless jewelry designed to be lived in. Ethically sourced 14k gold and sterling silver.';
+  const heroTitle = settings?.find(s => s.key === 'hero_title')?.value || 'Relógios de Luxo';
+  const heroSubtitle = settings?.find(s => s.key === 'hero_subtitle')?.value || 'Relógios e pulseiras para o homem moderno. Precisão suíça e design atemporal em materiais nobres.';
   const heroImage = settings?.find(s => s.key === 'hero_image')?.value || 'https://pixabay.com/get/gc50e991d87e6b90338e1db8a536d5858c26ed48ab4dfd250fb387bb85d7a33116b296a6303e8e3fcc45d5baef9694c54ffb2ec6d5fbd0aba6d004699ddb064a9_1280.jpg';
 
   const container = {
@@ -91,7 +91,7 @@ export default function Home() {
             </div>
           ) : error ? (
             <div className="text-center py-12 text-destructive">
-              Failed to load collection. Please try again.
+              Erro ao carregar a coleção. Tente novamente.
             </div>
           ) : (
             <motion.div 
@@ -123,12 +123,12 @@ export default function Home() {
               
               {products?.length === 0 && (
                 <div className="col-span-full py-24 text-center">
-                  <p className="text-lg text-muted-foreground">No products found matching your filters.</p>
-                  <button 
+                  <p className="text-lg text-muted-foreground">Nenhum produto encontrado com esses filtros.</p>
+                  <button
                     onClick={() => setFilters({ type: "", metal: "", stone: "", sort: "newest" })}
                     className="mt-4 text-sm underline hover:text-primary"
                   >
-                    Clear all filters
+                    Limpar filtros
                   </button>
                 </div>
               )}
@@ -143,41 +143,41 @@ export default function Home() {
           <div className="space-y-6">
             <h4 className="font-serif text-2xl text-white">SAINT MARTINO</h4>
             <p className="text-sm leading-relaxed max-w-xs text-white/60">
-              Creating modern heirlooms that tell your story. Sustainable materials, transparent pricing, and timeless design.
+              Relógios de precisão e pulseiras de luxo para o homem que valoriza qualidade. Materiais nobres, design atemporal e garantia vitalícia.
             </p>
           </div>
           
           <div className="space-y-4">
-            <h5 className="font-sans font-medium text-white uppercase tracking-widest text-xs">Shop</h5>
+            <h5 className="font-sans font-medium text-white uppercase tracking-widest text-xs">Loja</h5>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/new" className="hover:text-white transition-colors">New Arrivals</Link></li>
-              <li><Link href="/rings" className="hover:text-white transition-colors">Rings</Link></li>
-              <li><Link href="/necklaces" className="hover:text-white transition-colors">Necklaces</Link></li>
-              <li><Link href="/earrings" className="hover:text-white transition-colors">Earrings</Link></li>
+              <li><Link href="/new" className="hover:text-white transition-colors">Novos Produtos</Link></li>
+              <li><Link href="/watches" className="hover:text-white transition-colors">Relógios</Link></li>
+              <li><Link href="/bracelets" className="hover:text-white transition-colors">Pulseiras</Link></li>
+              <li><Link href="/accessories" className="hover:text-white transition-colors">Acessórios</Link></li>
             </ul>
           </div>
           
           <div className="space-y-4">
-            <h5 className="font-sans font-medium text-white uppercase tracking-widest text-xs">About</h5>
+            <h5 className="font-sans font-medium text-white uppercase tracking-widest text-xs">Sobre</h5>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/our-story" className="hover:text-white transition-colors">Our Story</Link></li>
-              <li><Link href="/sustainability" className="hover:text-white transition-colors">Sustainability</Link></li>
-              <li><Link href="/materials" className="hover:text-white transition-colors">Materials</Link></li>
-              <li><Link href="/faq" className="hover:text-white transition-colors">FAQ</Link></li>
+              <li><Link href="/our-story" className="hover:text-white transition-colors">Nossa História</Link></li>
+              <li><Link href="/sustainability" className="hover:text-white transition-colors">Sustentabilidade</Link></li>
+              <li><Link href="/materials" className="hover:text-white transition-colors">Materiais</Link></li>
+              <li><Link href="/faq" className="hover:text-white transition-colors">Perguntas</Link></li>
             </ul>
           </div>
           
           <div className="space-y-4">
             <h5 className="font-sans font-medium text-white uppercase tracking-widest text-xs">Newsletter</h5>
-            <p className="text-xs text-white/60">Sign up for early access to drops and 10% off your first order.</p>
+            <p className="text-xs text-white/60">Receba novidades e ganhe 10% de desconto na sua primeira compra.</p>
             <div className="flex gap-2">
-              <input 
-                type="email" 
-                placeholder="Your email" 
+              <input
+                type="email"
+                placeholder="Seu email"
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/40 px-4 py-2 w-full text-sm focus:outline-none focus:border-white/50 transition-colors"
               />
               <button className="bg-white text-black px-4 py-2 text-xs uppercase font-bold tracking-wider hover:bg-white/90 transition-colors">
-                Join
+                Enviar
               </button>
             </div>
           </div>

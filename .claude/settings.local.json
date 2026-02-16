@@ -12,7 +12,12 @@
       "Bash(ls:*)",
       "Bash(git config:*)",
       "Bash(git commit:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(git reset:*)",
+      "Bash(__NEW_LINE_22fb530028f2e9f7__ tail -30 /tmp/server.log)"
     ]
   }
 }
