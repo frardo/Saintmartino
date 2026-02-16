@@ -42,12 +42,29 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   // File upload endpoint
-  app.post("/api/upload", upload.single("file"), (req, res) => {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file provided" });
-    }
-    const fileUrl = `/images/${req.file.filename}`;
-    res.status(201).json({ url: fileUrl });
+  app.post("/api/upload", (req, res) => {
+    upload.single("file")(req, res, (err) => {
+      if (err) {
+        console.error("Multer error:", err);
+        return res.status(400).json({ message: `Upload error: ${err.message}` });
+      }
+
+      if (!req.file) {
+        console.error("No file in request");
+        return res.status(400).json({ message: "No file provided" });
+      }
+
+      const fileUrl = `/images/${req.file.filename}`;
+      console.log("File uploaded successfully:", {
+        filename: req.file.filename,
+        originalname: req.file.originalname,
+        size: req.file.size,
+        mimetype: req.file.mimetype,
+        path: req.file.path,
+        url: fileUrl,
+      });
+      res.status(201).json({ url: fileUrl });
+    });
   });
 
   app.get(api.products.list.path, async (req, res) => {
