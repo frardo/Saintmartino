@@ -98,7 +98,7 @@ export default function Home() {
               variants={container}
               initial="hidden"
               animate="show"
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2"
             >
               {products?.map((product, idx) => {
                 const elements = [];
