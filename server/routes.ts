@@ -222,6 +222,28 @@ export async function registerRoutes(
     res.json({ success: true });
   });
 
+  // Reset and seed endpoint (dev only)
+  app.post("/api/admin/reset-products", async (req, res) => {
+    try {
+      if (process.env.NODE_ENV !== "development") {
+        return res.status(403).json({ message: "Not available in production" });
+      }
+
+      // Get all products and delete them
+      const products = await storage.getProducts();
+      for (const product of products) {
+        await storage.deleteProduct(product.id);
+      }
+
+      // Reseed
+      await seedDatabaseForced();
+      res.json({ message: "Products reset and reseeded successfully" });
+    } catch (err) {
+      console.error("Error resetting products:", err);
+      res.status(500).json({ message: "Error resetting products" });
+    }
+  });
+
   // Seed data route (internal use or auto-run)
   await seedDatabase();
 
@@ -231,85 +253,85 @@ export async function registerRoutes(
 async function seedDatabase() {
   const existing = await storage.getProducts();
   if (existing.length === 0) {
-    const rings = [
+    const watches = [
       {
-        name: "The Curve Ring",
-        description: "A beautifully sculpted 14k gold band that elegantly curves around the finger. Perfect for stacking or wearing alone as a statement piece.",
-        price: "320.00",
-        type: "Ring",
-        metal: "14k Gold",
-        stone: "Diamond",
+        name: "Elegância Clássica",
+        description: "Relógio de pulso sofisticado em ouro 18k com movimento automático suíço. Mostrador branco com índices em diamante, resistente à água até 50m. Ideal para ocasiões especiais.",
+        price: "2890.00",
+        type: "Relógio de Pulso",
+        metal: "Ouro 18k",
+        stone: "Diamante",
         imageUrls: [
-          "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?q=80&w=800&auto=format&fit=crop",
         ],
       },
       {
-        name: "The Teardrop Ring",
-        description: "Featuring a stunning pear-cut topaz set in polished 14k gold. This ring captures the light from every angle.",
-        price: "450.00",
-        type: "Ring",
-        metal: "14k Gold",
-        stone: "Topaz",
-        imageUrls: [
-          "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=800&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1598560976315-182f03dfbb83?q=80&w=800&auto=format&fit=crop",
-        ],
-      },
-      {
-        name: "The Solis Ring",
-        description: "Inspired by the sun, this sterling silver band features intricate radial engravings. A modern classic for everyday wear.",
-        price: "280.00",
-        type: "Ring",
-        metal: "Silver",
+        name: "Prata Minimalista",
+        description: "Relógio elegante em prata 925 com design minimalista. Movimento quartz de precisão, vidro de safira anti-reflexo, resistente à água até 30m. Perfeito para uso diário.",
+        price: "890.00",
+        type: "Relógio de Pulso",
+        metal: "Prata 925",
         stone: null,
         imageUrls: [
-          "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=800&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1517836357463-d25ddfcbf042?q=80&w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop",
         ],
       },
       {
-        name: "The Moody Ring",
-        description: "Deep blue sapphire set in a heavy 14k gold band. Bold, sophisticated, and unmistakably unique.",
-        price: "380.00",
-        type: "Ring",
-        metal: "14k Gold",
-        stone: "Sapphire",
+        name: "Ouro Rose Moderno",
+        description: "Relógio contemporâneo em ouro rose 14k com mostrador azul safira. Movimento automático, resistente à água até 100m. Um luxo discreto e sofisticado.",
+        price: "1890.00",
+        type: "Relógio de Pulso",
+        metal: "Ouro Rose 14k",
+        stone: "Safira",
         imageUrls: [
-          "https://images.unsplash.com/photo-1598560976315-182f03dfbb83?q=80&w=800&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1505778276668-fc86f37cd1f5?q=80&w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1523439773649-fc12a6146d45?q=80&w=800&auto=format&fit=crop",
         ],
       },
       {
-        name: "The Duo Ring",
-        description: "Two interlocking bands of 14k gold representing connection and balance. Accented with brilliant pavé diamonds.",
-        price: "520.00",
-        type: "Ring",
-        metal: "14k Gold",
-        stone: "Diamond",
-        imageUrls: [
-          "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=800&auto=format&fit=crop",
-        ],
-      },
-      {
-        name: "The Classic Band",
-        description: "A minimalist sterling silver band with a high-polish finish. The quintessential foundation for any jewelry collection.",
-        price: "150.00",
-        type: "Ring",
-        metal: "Silver",
+        name: "Aço Esportivo",
+        description: "Relógio resistente em aço inoxidável 316L com movimento quartz. Mostrador preto com índices fluorescentes, resistente à água até 200m. Ideal para atividades aquáticas.",
+        price: "1290.00",
+        type: "Relógio de Pulso",
+        metal: "Aço Inoxidável",
         stone: null,
         imageUrls: [
-          "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=800&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1598560976315-182f03dfbb83?q=80&w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1539815274047-0d3b3b676b0e?q=80&w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1522312917136-38f9d9d61630?q=80&w=800&auto=format&fit=crop",
+        ],
+      },
+      {
+        name: "Titânio Premium",
+        description: "Relógio ultramoderno em titânio puro com movimento automático. Extremamente leve e durável, resistente à água até 300m. Cronógrafo funcional integrado.",
+        price: "3290.00",
+        type: "Relógio de Pulso",
+        metal: "Titânio",
+        stone: null,
+        imageUrls: [
+          "https://images.unsplash.com/photo-1604365860552-30c254cf1681?q=80&w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1506032613408-eca07ce68773?q=80&w=800&auto=format&fit=crop",
+        ],
+      },
+      {
+        name: "Ouro Clássico",
+        description: "Relógio de bolso em ouro amarelo 24k com movimento manual vintage. Restaurado e polido à perfeição, uma peça de colecionador com capa em couro genuíno.",
+        price: "4590.00",
+        type: "Relógio de Bolso",
+        metal: "Ouro 24k",
+        stone: null,
+        imageUrls: [
+          "https://images.unsplash.com/photo-1505634346881-b72b27e84530?q=80&w=800&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1524592094714-0f3e5e5751f9?q=80&w=800&auto=format&fit=crop",
         ],
       }
     ];
 
-    for (const ring of rings) {
-      await storage.createProduct(ring);
+    for (const watch of watches) {
+      await storage.createProduct(watch);
     }
-    console.log("Seeded database with products");
+    console.log("Seeded database with watch products");
   }
 
   const existingSettings = await storage.getSiteSettings();
@@ -319,4 +341,86 @@ async function seedDatabase() {
     await storage.upsertSiteSetting('hero_image', 'https://pixabay.com/get/gc50e991d87e6b90338e1db8a536d5858c26ed48ab4dfd250fb387bb85d7a33116b296a6303e8e3fcc45d5baef9694c54ffb2ec6d5fbd0aba6d004699ddb064a9_1280.jpg');
     console.log("Seeded database with site settings");
   }
+}
+
+async function seedDatabaseForced() {
+  const watches = [
+    {
+      name: "Elegância Clássica",
+      description: "Relógio de pulso sofisticado em ouro 18k com movimento automático suíço. Mostrador branco com índices em diamante, resistente à água até 50m. Ideal para ocasiões especiais.",
+      price: "2890.00",
+      type: "Relógio de Pulso",
+      metal: "Ouro 18k",
+      stone: "Diamante",
+      imageUrls: [
+        "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=800&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?q=80&w=800&auto=format&fit=crop",
+      ],
+    },
+    {
+      name: "Prata Minimalista",
+      description: "Relógio elegante em prata 925 com design minimalista. Movimento quartz de precisão, vidro de safira anti-reflexo, resistente à água até 30m. Perfeito para uso diário.",
+      price: "890.00",
+      type: "Relógio de Pulso",
+      metal: "Prata 925",
+      stone: null,
+      imageUrls: [
+        "https://images.unsplash.com/photo-1517836357463-d25ddfcbf042?q=80&w=800&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop",
+      ],
+    },
+    {
+      name: "Ouro Rose Moderno",
+      description: "Relógio contemporâneo em ouro rose 14k com mostrador azul safira. Movimento automático, resistente à água até 100m. Um luxo discreto e sofisticado.",
+      price: "1890.00",
+      type: "Relógio de Pulso",
+      metal: "Ouro Rose 14k",
+      stone: "Safira",
+      imageUrls: [
+        "https://images.unsplash.com/photo-1505778276668-fc86f37cd1f5?q=80&w=800&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1523439773649-fc12a6146d45?q=80&w=800&auto=format&fit=crop",
+      ],
+    },
+    {
+      name: "Aço Esportivo",
+      description: "Relógio resistente em aço inoxidável 316L com movimento quartz. Mostrador preto com índices fluorescentes, resistente à água até 200m. Ideal para atividades aquáticas.",
+      price: "1290.00",
+      type: "Relógio de Pulso",
+      metal: "Aço Inoxidável",
+      stone: null,
+      imageUrls: [
+        "https://images.unsplash.com/photo-1539815274047-0d3b3b676b0e?q=80&w=800&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1522312917136-38f9d9d61630?q=80&w=800&auto=format&fit=crop",
+      ],
+    },
+    {
+      name: "Titânio Premium",
+      description: "Relógio ultramoderno em titânio puro com movimento automático. Extremamente leve e durável, resistente à água até 300m. Cronógrafo funcional integrado.",
+      price: "3290.00",
+      type: "Relógio de Pulso",
+      metal: "Titânio",
+      stone: null,
+      imageUrls: [
+        "https://images.unsplash.com/photo-1604365860552-30c254cf1681?q=80&w=800&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1506032613408-eca07ce68773?q=80&w=800&auto=format&fit=crop",
+      ],
+    },
+    {
+      name: "Ouro Clássico",
+      description: "Relógio de bolso em ouro amarelo 24k com movimento manual vintage. Restaurado e polido à perfeição, uma peça de colecionador com capa em couro genuíno.",
+      price: "4590.00",
+      type: "Relógio de Bolso",
+      metal: "Ouro 24k",
+      stone: null,
+      imageUrls: [
+        "https://images.unsplash.com/photo-1505634346881-b72b27e84530?q=80&w=800&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1524592094714-0f3e5e5751f9?q=80&w=800&auto=format&fit=crop",
+      ],
+    }
+  ];
+
+  for (const watch of watches) {
+    await storage.createProduct(watch);
+  }
+  console.log("Reseeded database with watch products");
 }

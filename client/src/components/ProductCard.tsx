@@ -11,7 +11,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <Link href={`/product/${product.id}`} className="group block cursor-pointer">
+    <Link href={`/product/R${product.id}`} className="group block cursor-pointer">
       <div 
         className="relative aspect-[3/4] overflow-hidden bg-secondary mb-4"
         onMouseEnter={() => setIsHovered(true)}
@@ -20,7 +20,7 @@ export function ProductCard({ product }: ProductCardProps) {
         {product.isNew && (
           <div className="absolute top-3 left-3 z-10">
             <span className="bg-white/90 backdrop-blur text-[10px] uppercase tracking-widest font-semibold px-2 py-1">
-              New
+              Novo
             </span>
           </div>
         )}
@@ -39,7 +39,7 @@ export function ProductCard({ product }: ProductCardProps) {
         {product.imageUrls.length > 1 && (
           <motion.img
             src={product.imageUrls[1]}
-            alt={`${product.name} alternate view`}
+            alt={`R${product.name} alternate view`}
             className="absolute inset-0 h-full w-full object-cover object-center"
             initial={{ opacity: 0 }}
             animate={{
@@ -56,7 +56,7 @@ export function ProductCard({ product }: ProductCardProps) {
           initial={false}
         >
           <button className="w-full bg-white text-black py-3 text-xs uppercase tracking-widest font-semibold hover:bg-primary hover:text-white transition-colors">
-            Quick Add
+            Adicionar Rápido
           </button>
         </motion.div>
       </div>
@@ -70,15 +70,15 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.discountPercent > 0 ? (
               <>
                 <span className="font-sans text-sm text-muted-foreground line-through">
-                  ${Number(product.price).toFixed(2)}
+                  R${Number(product.price).toFixed(2)}
                 </span>
                 <span className="font-sans text-sm font-semibold text-foreground">
-                  ${(Number(product.price) * (1 - product.discountPercent / 100)).toFixed(2)}
+                  R${(Number(product.price) * (1 - product.discountPercent / 100)).toFixed(2)}
                 </span>
               </>
             ) : (
               <span className="font-sans text-sm text-muted-foreground">
-                ${Number(product.price).toFixed(2)}
+                R${Number(product.price).toFixed(2)}
               </span>
             )}
           </div>

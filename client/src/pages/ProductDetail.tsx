@@ -23,12 +23,12 @@ export default function ProductDetail() {
   if (error || !product) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <p className="text-destructive">Product not found.</p>
-        <button 
+        <p className="text-destructive">Relógio não encontrado.</p>
+        <button
           onClick={() => window.history.back()}
           className="underline hover:text-primary"
         >
-          Go Back
+          Voltar
         </button>
       </div>
     );
@@ -97,34 +97,34 @@ export default function ProductDetail() {
             </h1>
             
             <p className="font-sans text-xl md:text-2xl mb-8">
-              ${Number(product.price).toFixed(2)}
+              R$ {Number(product.price).toFixed(2)}
             </p>
             
             <div className="prose prose-sm text-muted-foreground mb-10 max-w-md">
               <p>
-                Handcrafted in {product.metal}, this {product.type.toLowerCase()} is designed 
-                to be a timeless addition to your collection. 
-                {product.isNew && " Part of our latest collection release."}
+                Fabricado em {product.metal}, este {product.type.toLowerCase()} é projetado
+                para ser uma adição atemporal à sua coleção.
+                {product.isNew && " Parte de nosso lançamento de coleção mais recente."}
               </p>
               <ul className="mt-4 list-disc pl-4 space-y-1">
-                <li>Ethically sourced materials</li>
-                <li>Hand-polished finish</li>
-                <li>Made in Los Angeles</li>
+                <li>Materiais eticamente fornecidos</li>
+                <li>Acabamento polido à mão</li>
+                <li>Certificado de autenticidade</li>
               </ul>
             </div>
             
             <div className="flex flex-col gap-6 max-w-sm">
               <div className="flex items-center justify-between border border-border p-3">
-                <span className="text-sm font-medium">Quantity</span>
+                <span className="text-sm font-medium">Quantidade</span>
                 <div className="flex items-center gap-4">
-                  <button 
+                  <button
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
                     className="p-1 hover:text-primary transition-colors"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
                   <span className="w-4 text-center text-sm">{quantity}</span>
-                  <button 
+                  <button
                     onClick={() => setQuantity(q => q + 1)}
                     className="p-1 hover:text-primary transition-colors"
                   >
@@ -132,16 +132,16 @@ export default function ProductDetail() {
                   </button>
                 </div>
               </div>
-              
-              <button 
-                onClick={() => alert("Added to cart!")}
+
+              <button
+                onClick={() => alert("Adicionado ao carrinho!")}
                 className="w-full bg-[#262626] text-white py-4 text-sm uppercase tracking-widest font-bold hover:bg-black transition-colors shadow-lg shadow-black/5"
               >
-                Add to Cart - ${(Number(product.price) * quantity).toFixed(2)}
+                Adicionar ao Carrinho - R$ {(Number(product.price) * quantity).toFixed(2)}
               </button>
-              
+
               <p className="text-xs text-center text-muted-foreground">
-                Free shipping on orders over $200. 30-day returns.
+                Frete grátis em pedidos acima de R$ 500. Devolução em 30 dias.
               </p>
             </div>
           </div>
