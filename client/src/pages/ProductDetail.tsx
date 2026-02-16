@@ -42,27 +42,10 @@ export default function ProductDetail() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
 
           {/* Product Images Gallery */}
-          <div className="flex flex-col gap-4">
-            {/* Main Image */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="aspect-[3/4] md:aspect-square bg-secondary relative overflow-hidden group"
-            >
-              <motion.img
-                key={selectedImageIndex}
-                src={product.imageUrls[selectedImageIndex]}
-                alt={product.name}
-                className="w-full h-full object-cover"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-              />
-            </motion.div>
-
-            {/* Thumbnail Images - Vertical grid up to 6 */}
+          <div className="flex gap-4">
+            {/* Thumbnail Images - Left Column */}
             {product.imageUrls.length > 1 && (
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex flex-col gap-2">
                 {product.imageUrls.map((imageUrl, index) => (
                   <button
                     key={index}
@@ -82,6 +65,23 @@ export default function ProductDetail() {
                 ))}
               </div>
             )}
+
+            {/* Main Image */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="aspect-[3/4] md:aspect-square bg-secondary relative overflow-hidden group flex-1"
+            >
+              <motion.img
+                key={selectedImageIndex}
+                src={product.imageUrls[selectedImageIndex]}
+                alt={product.name}
+                className="w-full h-full object-cover"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              />
+            </motion.div>
           </div>
           
           {/* Product Details */}
