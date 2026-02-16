@@ -83,13 +83,11 @@ export async function registerRoutes(
             path: req.file.path,
           });
 
-          // Send response
-          res.setHeader("Content-Type", "application/json");
-          res.status(201);
-          res.send(JSON.stringify({ url: fileUrl }));
+          // Send response using Express json() method
+          return res.status(201).json({ url: fileUrl });
         } catch (innerErr) {
           console.error("Error in upload callback:", innerErr);
-          res.status(500).json({ message: "Internal server error during upload" });
+          return res.status(500).json({ message: "Internal server error during upload" });
         }
       });
     } catch (outerErr) {
