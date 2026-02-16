@@ -21,11 +21,20 @@ if (!fs.existsSync(uploadDir)) {
 }
 const storage_multer = multer.diskStorage({
   destination: (req, file, cb) => {
+    console.log("Setting destination to:", uploadDir);
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+    try {
+      const ext = path.extname(file.originalname) || ".jpg";
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const newFilename = uniqueSuffix + ext;
+      console.log("Original filename:", file.originalname, "New filename:", newFilename);
+      cb(null, newFilename);
+    } catch (error) {
+      console.error("Error in filename callback:", error);
+      cb(error as Error);
+    }
   },
 });
 
@@ -51,39 +60,42 @@ export async function registerRoutes(
 
   // File upload endpoint
   app.post("/api/upload", (req, res) => {
-    console.log("=== UPLOAD REQUEST RECEIVED ===");
-    console.log("Headers:", req.headers);
+    try {
+      console.log("=== UPLOAD REQUEST RECEIVED ===");
 
-    upload.single("file")(req, res, (err) => {
-      if (err) {
-        console.error("Multer error:", err);
-        const errorResponse = { message: `Upload error: ${err.message}` };
-        console.log("Sending error response:", errorResponse);
-        res.status(400).json(errorResponse);
-        return;
-      }
+      upload.single("file")(req, res, (err) => {
+        try {
+          if (err) {
+            console.error("Multer error:", err);
+            return res.status(400).json({ message: `Upload error: ${err.message}` });
+          }
 
-      if (!req.file) {
-        console.error("No file in request");
-        const errorResponse = { message: "No file provided" };
-        console.log("Sending error response:", errorResponse);
-        res.status(400).json(errorResponse);
-        return;
-      }
+          if (!req.file) {
+            console.error("No file in request");
+            return res.status(400).json({ message: "No file provided" });
+          }
 
-      const fileUrl = `/images/${req.file.filename}`;
-      const successResponse = { url: fileUrl };
-      console.log("File uploaded successfully:", {
-        filename: req.file.filename,
-        originalname: req.file.originalname,
-        size: req.file.size,
-        mimetype: req.file.mimetype,
-        path: req.file.path,
-        url: fileUrl,
+          const fileUrl = `/images/${req.file.filename}`;
+          console.log("File uploaded successfully:", {
+            filename: req.file.filename,
+            originalname: req.file.originalname,
+            size: req.file.size,
+            path: req.file.path,
+          });
+
+          // Send response
+          res.setHeader("Content-Type", "application/json");
+          res.status(201);
+          res.send(JSON.stringify({ url: fileUrl }));
+        } catch (innerErr) {
+          console.error("Error in upload callback:", innerErr);
+          res.status(500).json({ message: "Internal server error during upload" });
+        }
       });
-      console.log("Sending success response:", successResponse);
-      res.status(201).json(successResponse);
-    });
+    } catch (outerErr) {
+      console.error("Error in upload endpoint:", outerErr);
+      res.status(500).json({ message: "Internal server error" });
+    }
   });
 
   app.get(api.products.list.path, async (req, res) => {
