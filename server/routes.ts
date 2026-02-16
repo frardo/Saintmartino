@@ -7,10 +7,18 @@ import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Configure multer for file uploads
-const uploadDir = path.join(__dirname, "../public/images");
+// Configure multer for file uploads - use process.cwd() for absolute path
+const uploadDir = path.join(process.cwd(), "public", "images");
+
+// Ensure directory exists
+import fs from "fs";
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log("Created upload directory:", uploadDir);
+}
 const storage_multer = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
