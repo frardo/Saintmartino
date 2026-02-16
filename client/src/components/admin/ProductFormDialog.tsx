@@ -59,6 +59,7 @@ export function ProductFormDialog({
     product?.imageUrls || []
   );
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadFile, isUploading } = useUploadFile();
 
@@ -112,6 +113,46 @@ export function ProductFormDialog({
       setImageFiles((prev) => prev.filter((_, i) => i !== fileIndex));
       setImagePreviews((prev) => prev.filter((_, i) => i !== index));
     }
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      return;
+    }
+
+    // Reorder images in previews
+    const newPreviews = [...imagePreviews];
+    const [draggedItem] = newPreviews.splice(draggedIndex, 1);
+    newPreviews.splice(targetIndex, 0, draggedItem);
+    setImagePreviews(newPreviews);
+
+    // If there are new files, also reorder them
+    if (imageFiles.length > 0) {
+      const newFiles = [...imageFiles];
+      const draggedFileIndex = draggedIndex - (imagePreviews.length - imageFiles.length);
+      const targetFileIndex = targetIndex - (imagePreviews.length - imageFiles.length);
+
+      if (draggedFileIndex >= 0 && targetFileIndex >= 0) {
+        const [draggedFile] = newFiles.splice(draggedFileIndex, 1);
+        newFiles.splice(targetFileIndex, 0, draggedFile);
+        setImageFiles(newFiles);
+      }
+    }
+
+    setDraggedIndex(null);
   };
 
   const handleSubmit = async (formData: FormSchema) => {
@@ -306,17 +347,26 @@ export function ProductFormDialog({
                   {imagePreviews.map((preview, index) => (
                     <div
                       key={index}
-                      className="relative aspect-square overflow-hidden rounded-lg border border-border bg-muted"
+                      draggable
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, index)}
+                      className={`relative aspect-square overflow-hidden rounded-lg border-2 bg-muted cursor-move transition-all ${
+                        draggedIndex === index
+                          ? "opacity-50 border-primary"
+                          : "border-border hover:border-primary/50"
+                      }`}
                     >
                       <img
                         src={preview}
                         alt={`Product ${index + 1}`}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover pointer-events-none"
+                        draggable={false}
                       />
                       <button
                         type="button"
                         onClick={() => removeImage(index)}
-                        className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                        className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600 z-10"
                       >
                         <X size={14} />
                       </button>
