@@ -17,7 +17,10 @@
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
       "Bash(git reset:*)",
-      "Bash(__NEW_LINE_22fb530028f2e9f7__ tail -30 /tmp/server.log)"
+      "Bash(__NEW_LINE_22fb530028f2e9f7__ tail -30 /tmp/server.log)",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 5000 | Stop-Process -Force\")",
+      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force\":*)",
+      "Bash(powershell -Command \"Get-Process node,tsx -ErrorAction SilentlyContinue | Stop-Process -Force 2>&1; echo ''Processes killed''\")"
     ]
   }
 }

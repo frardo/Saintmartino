@@ -7,6 +7,11 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import ProductDetail from "@/pages/ProductDetail";
 import Cart from "@/pages/Cart";
+import Checkout from "@/pages/Checkout";
+import CheckoutSuccess from "@/pages/CheckoutSuccess";
+import CheckoutFailure from "@/pages/CheckoutFailure";
+import CheckoutPending from "@/pages/CheckoutPending";
+import Tracking from "@/pages/Tracking";
 import Admin from "@/pages/Admin";
 import { Settings } from "lucide-react";
 
@@ -17,6 +22,11 @@ function Router() {
       <Route path="/shop" component={Home} />
       <Route path="/product/:id" component={ProductDetail} />
       <Route path="/cart" component={Cart} />
+      <Route path="/checkout" component={Checkout} />
+      <Route path="/checkout-success" component={CheckoutSuccess} />
+      <Route path="/checkout-failure" component={CheckoutFailure} />
+      <Route path="/checkout-pending" component={CheckoutPending} />
+      <Route path="/tracking" component={Tracking} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>

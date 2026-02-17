@@ -1,5 +1,5 @@
 import { useRoute, useLocation } from "wouter";
-import { useProduct } from "@/hooks/use-products";
+import { useProduct, useProducts } from "@/hooks/use-products";
 import { useCart } from "@/hooks/use-cart";
 import { Header } from "@/components/Header";
 import { Loader2, Minus, Plus } from "lucide-react";
@@ -9,12 +9,16 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
+import { ProductCard } from "@/components/ProductCard";
+import Autoplay from "embla-carousel-autoplay";
 
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
   const [, setLocation] = useLocation();
   const id = params?.id ? parseInt(params.id) : 0;
   const { data: product, isLoading, error } = useProduct(id);
+  const { data: recommendedProducts } = useProducts(product ? { type: product.type } : undefined);
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -23,6 +27,9 @@ export default function ProductDetail() {
   const [shippingError, setShippingError] = useState("");
   const [loadingCep, setLoadingCep] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+
+  // Filter out current product from recommended
+  const filteredRecommended = recommendedProducts?.filter(p => p.id !== product?.id) || [];
 
   const formatCep = (value: string) => {
     const cleaned = value.replace(/\D/g, "");
@@ -310,8 +317,41 @@ export default function ProductDetail() {
               </p>
             </div>
           </div>
-          
+
         </div>
+
+        {/* Recommended Products Section */}
+        {filteredRecommended.length > 0 && (
+          <div className="mt-20 pt-12 border-t">
+            <h2 className="font-serif text-3xl md:text-4xl mb-8 text-foreground">
+              Relógios Recomendados
+            </h2>
+
+            <Carousel
+              opts={{ loop: true, align: "start" }}
+              plugins={[
+                Autoplay({
+                  delay: 4000,
+                  stopOnInteraction: true,
+                })
+              ]}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-4">
+                {filteredRecommended.map((recommendedProduct) => (
+                  <CarouselItem
+                    key={recommendedProduct.id}
+                    className="pl-4 basis-full sm:basis-1/2 lg:basis-1/4"
+                  >
+                    <ProductCard product={recommendedProduct} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="absolute -left-12 top-1/2 -translate-y-1/2" />
+              <CarouselNext className="absolute -right-12 top-1/2 -translate-y-1/2" />
+            </Carousel>
+          </div>
+        )}
       </main>
     </div>
   );

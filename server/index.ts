@@ -1,4 +1,6 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -26,8 +28,27 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
+// Configure sessions for admin authentication
+app.use(session({
+  secret: process.env.SESSION_SECRET || "fallback-dev-secret-change-in-production",
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 }
+}));
+
+// Serve static files from public directory (including PDFs)
+app.use(express.static(path.join(__dirname, "../public")));
+
 // Serve uploaded images as static files
 app.use("/images", express.static(path.join(__dirname, "../public/images")));
+
+// API route guard middleware - ensure API routes are never caught by SPA fallback
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    console.log(`🔐 API Route Guard: ${req.method} ${req.path}`);
+  }
+  next();
+});
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -67,8 +88,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Register all API routes first
+  console.log("📡 Setting up API routes...");
   await registerRoutes(httpServer, app);
 
+  // Error handler middleware
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

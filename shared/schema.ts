@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, decimal, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -54,6 +54,22 @@ export const banners = pgTable("banners", {
   createdAt: text("created_at").notNull(),
 });
 
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  status: text("status").notNull().default("pending"), // pending, approved, rejected, refunded
+  total: decimal("total").notNull(),
+  paymentId: text("payment_id"), // ID do pagamento no Mercado Pago
+  paymentMethod: text("payment_method"), // credit_card, debit_card, pix, boleto
+  customerName: text("customer_name").notNull(),
+  customerEmail: text("customer_email").notNull(),
+  customerPhone: text("customer_phone"),
+  customerCpf: text("customer_cpf"),
+  shippingAddress: jsonb("shipping_address"), // { cep, street, number, complement, neighborhood, city, state }
+  items: jsonb("items").notNull(), // Array de { productId, name, price, quantity }
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // === BASE SCHEMAS ===
 // Custom schema for products with imageUrls as array (converted to JSON string for storage)
 // All fields optional - empty fields won't appear on product
@@ -73,6 +89,7 @@ export const insertSiteSettingSchema = createInsertSchema(siteSettings).omit({ i
 export const insertPromotionSchema = createInsertSchema(promotions).omit({ id: true });
 export const insertCouponSchema = createInsertSchema(coupons).omit({ id: true });
 export const insertBannerSchema = createInsertSchema(banners).omit({ id: true });
+export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
 
 // === EXPLICIT API CONTRACT TYPES ===
 export type ProductRow = typeof products.$inferSelect;
@@ -89,6 +106,8 @@ export type Coupon = typeof coupons.$inferSelect;
 export type InsertCoupon = z.infer<typeof insertCouponSchema>;
 export type Banner = typeof banners.$inferSelect;
 export type InsertBanner = z.infer<typeof insertBannerSchema>;
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
 
 // Response types
 export type ProductResponse = Product;

@@ -6,6 +6,8 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
+import { MercadoPagoConfig, Payment } from "mercadopago";
+import https from "https";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -53,13 +55,58 @@ const upload = multer({
   },
 });
 
+// Middleware to require admin authentication
+function requireAdmin(req: any, res: any, next: any) {
+  if (req.session?.isAdmin) {
+    return next();
+  }
+  return res.status(401).json({ message: "Não autorizado - autenticação necessária" });
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  console.log("🔧 Registering API routes...");
+
+  // Admin authentication routes (no requireAdmin needed for login)
+  app.post("/api/admin/login", (req, res) => {
+    try {
+      const { password } = req.body;
+      if (!password) {
+        return res.status(400).json({ message: "Senha necessária" });
+      }
+      if (password === process.env.ADMIN_PASSWORD) {
+        req.session.isAdmin = true;
+        console.log("✅ Admin login successful");
+        return res.json({ success: true, message: "Bem-vindo ao painel admin!" });
+      }
+      console.log("❌ Admin login failed - wrong password");
+      return res.status(401).json({ message: "Senha incorreta" });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Erro ao fazer login" });
+    }
+  });
+
+  app.post("/api/admin/logout", (req, res) => {
+    try {
+      req.session.destroy(() => {
+        console.log("✅ Admin logout successful");
+        res.json({ success: true });
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({ message: "Erro ao fazer logout" });
+    }
+  });
+
+  app.get("/api/admin/check", (req, res) => {
+    res.json({ isAdmin: !!req.session?.isAdmin });
+  });
 
   // File upload endpoint
-  app.post("/api/upload", (req, res) => {
+  app.post("/api/upload", requireAdmin, (req, res) => {
     try {
       console.log("=== UPLOAD REQUEST RECEIVED ===");
 
@@ -110,7 +157,7 @@ export async function registerRoutes(
     res.json(product);
   });
 
-  app.post(api.products.create.path, async (req, res) => {
+  app.post(api.products.create.path, requireAdmin, async (req, res) => {
     const parsed = api.products.create.input.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ message: parsed.error.message });
@@ -119,7 +166,7 @@ export async function registerRoutes(
     res.status(201).json(product);
   });
 
-  app.patch(api.products.update.path, async (req, res) => {
+  app.patch(api.products.update.path, requireAdmin, async (req, res) => {
     const parsed = api.products.update.input.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ message: parsed.error.message });
@@ -131,7 +178,7 @@ export async function registerRoutes(
     res.json(product);
   });
 
-  app.delete(api.products.delete.path, async (req, res) => {
+  app.delete(api.products.delete.path, requireAdmin, async (req, res) => {
     const deleted = await storage.deleteProduct(Number(req.params.id));
     if (!deleted) {
       return res.status(404).json({ message: 'Product not found' });
@@ -144,7 +191,7 @@ export async function registerRoutes(
     res.json(settings);
   });
 
-  app.put(api.siteSettings.update.path, async (req, res) => {
+  app.put(api.siteSettings.update.path, requireAdmin, async (req, res) => {
     const parsed = api.siteSettings.update.input.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ message: parsed.error.message });
@@ -159,7 +206,7 @@ export async function registerRoutes(
     res.json(promos);
   });
 
-  app.post(api.promotions.create.path, async (req, res) => {
+  app.post(api.promotions.create.path, requireAdmin, async (req, res) => {
     const parsed = api.promotions.create.input.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ message: parsed.error.message });
@@ -168,7 +215,7 @@ export async function registerRoutes(
     res.status(201).json(promo);
   });
 
-  app.delete(api.promotions.delete.path, async (req, res) => {
+  app.delete(api.promotions.delete.path, requireAdmin, async (req, res) => {
     const deleted = await storage.deletePromotion(Number(req.params.id));
     if (!deleted) {
       return res.status(404).json({ message: 'Promotion not found' });
@@ -182,7 +229,7 @@ export async function registerRoutes(
     res.json(coupons);
   });
 
-  app.post(api.coupons.create.path, async (req, res) => {
+  app.post(api.coupons.create.path, requireAdmin, async (req, res) => {
     const parsed = api.coupons.create.input.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ message: parsed.error.message });
@@ -191,7 +238,7 @@ export async function registerRoutes(
     res.status(201).json(coupon);
   });
 
-  app.delete(api.coupons.delete.path, async (req, res) => {
+  app.delete(api.coupons.delete.path, requireAdmin, async (req, res) => {
     const deleted = await storage.deleteCoupon(Number(req.params.id));
     if (!deleted) {
       return res.status(404).json({ message: 'Coupon not found' });
@@ -205,7 +252,7 @@ export async function registerRoutes(
     res.json(bannersList);
   });
 
-  app.post(api.banners.create.path, async (req, res) => {
+  app.post(api.banners.create.path, requireAdmin, async (req, res) => {
     const parsed = api.banners.create.input.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ message: parsed.error.message });
@@ -214,7 +261,7 @@ export async function registerRoutes(
     res.status(201).json(banner);
   });
 
-  app.delete(api.banners.delete.path, async (req, res) => {
+  app.delete(api.banners.delete.path, requireAdmin, async (req, res) => {
     const deleted = await storage.deleteBanner(Number(req.params.id));
     if (!deleted) {
       return res.status(404).json({ message: 'Banner not found' });
@@ -223,7 +270,7 @@ export async function registerRoutes(
   });
 
   // Clear all products endpoint (dev only)
-  app.post("/api/admin/clear-products", async (req, res) => {
+  app.post("/api/admin/clear-products", requireAdmin, async (req, res) => {
     try {
       if (process.env.NODE_ENV !== "development") {
         return res.status(403).json({ message: "Not available in production" });
@@ -242,17 +289,319 @@ export async function registerRoutes(
     }
   });
 
-  // Seed only site settings (not products - they should be added manually)
+  // === PAYMENT ROUTES ===
+  // Initialize Mercado Pago
+  const mpConfig = new MercadoPagoConfig({
+    accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || "",
+  });
+
+  // Create Mercado Pago Preference (Hosted Checkout)
+  console.log("📦 Registering POST /api/checkout/create-preference");
+  app.post("/api/checkout/create-preference", async (req, res) => {
+    try {
+      const { items } = req.body;
+      console.log("=== CREATE PREFERENCE REQUEST ===");
+      console.log("Items received:", items);
+
+      if (!items || items.length === 0) {
+        return res.status(400).json({ message: "No items in cart" });
+      }
+
+      // Get product details to build preference items
+      const preferenceItems = await Promise.all(
+        items.map(async (item: any) => {
+          console.log("Processing item:", item.product.id);
+          const product = await storage.getProduct(item.product.id);
+          if (!product) throw new Error(`Product ${item.product.id} not found`);
+
+          return {
+            title: product.name,
+            description: `${product.metal}${product.stone ? ` • ${product.stone}` : ""}`,
+            quantity: item.quantity,
+            currency_id: "BRL",
+            unit_price: parseFloat(product.price),
+            picture_url: product.imageUrls[0],
+          };
+        })
+      );
+
+      console.log("Preference items built:", preferenceItems);
+
+      // Calculate total
+      const total = preferenceItems.reduce((sum: number, item: any) => sum + (item.unit_price * item.quantity), 0);
+
+      // Create preference object
+      const baseUrl = process.env.NODE_ENV === "production"
+        ? "https://saint-martino.com"
+        : "http://localhost:5000";
+
+      const preference = {
+        items: preferenceItems,
+        back_urls: {
+          success: `${baseUrl}/checkout-success`,
+          failure: `${baseUrl}/checkout-failure`,
+          pending: `${baseUrl}/checkout-pending`,
+        },
+        external_reference: `order-${Date.now()}`,
+        payment_methods: {
+          // Exclude specific payment methods
+          excluded_payment_methods: [
+            {
+              id: "caixa",
+            },
+          ],
+        },
+      };
+
+      console.log("Preference object created:", JSON.stringify(preference, null, 2));
+      console.log("Access Token:", process.env.MERCADOPAGO_ACCESS_TOKEN ? "✓ Present" : "✗ Missing");
+
+      // Call Mercado Pago Preference API using https
+      const preferenceJson = JSON.stringify(preference);
+      const options = {
+        hostname: "api.mercadopago.com",
+        port: 443,
+        path: "/checkout/preferences",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(preferenceJson),
+          Authorization: `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}`,
+        },
+      };
+
+      const mpResponse = await new Promise<any>((resolve, reject) => {
+        const request = https.request(options, (response) => {
+          let data = "";
+          response.on("data", (chunk) => {
+            data += chunk;
+          });
+          response.on("end", () => {
+            resolve({ status: response.statusCode, data });
+          });
+        });
+
+        request.on("error", (error) => {
+          reject(error);
+        });
+
+        request.write(preferenceJson);
+        request.end();
+      });
+
+      console.log("MP Response status:", mpResponse.status);
+      console.log("MP Response:", mpResponse.data);
+
+      if (mpResponse.status !== 200 && mpResponse.status !== 201) {
+        try {
+          const error = JSON.parse(mpResponse.data);
+          console.error("Mercado Pago API error:", error);
+          return res.status(mpResponse.status).json({ message: "Error creating checkout", error });
+        } catch (parseError) {
+          console.error("Failed to parse error response:", mpResponse.data);
+          return res.status(mpResponse.status).json({ message: "Error creating checkout", raw: mpResponse.data });
+        }
+      }
+
+      let preferenceData;
+      try {
+        preferenceData = JSON.parse(mpResponse.data);
+      } catch (parseError) {
+        console.error("Failed to parse success response:", mpResponse.data);
+        return res.status(500).json({ message: "Invalid response from Mercado Pago" });
+      }
+
+      console.log("Preference created successfully:", preferenceData.id);
+
+      res.json({
+        success: true,
+        checkoutUrl: preferenceData.init_point,
+        preferenceId: preferenceData.id,
+        total: total,
+      });
+    } catch (error: any) {
+      console.error("Error creating preference:", error);
+      res.status(500).json({
+        message: "Error creating checkout",
+        error: error.message,
+      });
+    }
+  });
+
+  // Create Payment
+  app.post("/api/payment/create", async (req, res) => {
+    try {
+      const { amount, email, name, paymentMethod, token, installments, customerData, items } = req.body;
+
+      if (!amount || !email || !name || !paymentMethod) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const paymentClient = new Payment(mpConfig);
+      let paymentResult: any;
+      let status = "pending";
+      let paymentId: string | null = null;
+
+      try {
+        // Handle different payment methods
+        if (paymentMethod === "credit_card" || paymentMethod === "debit_card") {
+          // Card payment with tokenization
+          if (!token) {
+            return res.status(400).json({ message: "Card token required" });
+          }
+
+          paymentResult = await paymentClient.create({
+            body: {
+              transaction_amount: parseFloat(amount),
+              payment_method_id: paymentMethod === "credit_card" ? "visa" : "debit_card",
+              token: token,
+              installments: installments || 1,
+              payer: {
+                email: email,
+                first_name: name.split(" ")[0],
+                last_name: name.split(" ").slice(1).join(" ") || "Cliente",
+                identification: {
+                  type: "CPF",
+                  number: customerData?.cpf?.replace(/\D/g, ""),
+                },
+              },
+              description: `Pedido - ${items?.length || 0} produto(s)`,
+              metadata: {
+                order_items: items,
+                shipping_address: customerData?.shippingAddress,
+              },
+            },
+          });
+
+          paymentId = paymentResult.id;
+          status = paymentResult.status === "approved" ? "approved" : paymentResult.status === "pending" ? "pending" : "rejected";
+        } else if (paymentMethod === "pix") {
+          // PIX payment
+          paymentResult = await paymentClient.create({
+            body: {
+              transaction_amount: parseFloat(amount),
+              payment_method_id: "pix",
+              payer: {
+                email: email,
+                first_name: name.split(" ")[0],
+                last_name: name.split(" ").slice(1).join(" ") || "Cliente",
+              },
+              description: `Pedido - ${items?.length || 0} produto(s)`,
+              metadata: {
+                order_items: items,
+                shipping_address: customerData?.shippingAddress,
+              },
+            },
+          });
+
+          paymentId = paymentResult.id;
+          status = "pending"; // PIX sempre começa como pending até o pagamento
+        } else if (paymentMethod === "boleto") {
+          // Boleto payment
+          paymentResult = await paymentClient.create({
+            body: {
+              transaction_amount: parseFloat(amount),
+              payment_method_id: "bolbradesco",
+              payer: {
+                email: email,
+                first_name: name.split(" ")[0],
+                last_name: name.split(" ").slice(1).join(" ") || "Cliente",
+                identification: {
+                  type: "CPF",
+                  number: customerData?.cpf?.replace(/\D/g, ""),
+                },
+              },
+              description: `Pedido - ${items?.length || 0} produto(s)`,
+              metadata: {
+                order_items: items,
+                shipping_address: customerData?.shippingAddress,
+              },
+            },
+          });
+
+          paymentId = paymentResult.id;
+          status = "pending"; // Boleto sempre pending até confirmação
+        }
+      } catch (mpError: any) {
+        console.error("Mercado Pago API error:", mpError);
+        return res.status(400).json({
+          message: "Erro ao processar pagamento",
+          error: mpError.message || "Falha na comunicação com Mercado Pago",
+        });
+      }
+
+      // Create order in database
+      const order = await storage.createOrder({
+        status: status,
+        total: amount.toString(),
+        paymentMethod: paymentMethod,
+        paymentId: paymentId || undefined,
+        customerName: name,
+        customerEmail: email,
+        customerPhone: customerData?.phone,
+        customerCpf: customerData?.cpf,
+        shippingAddress: customerData?.shippingAddress,
+        items: items || [],
+      });
+
+      console.log("Order created:", order, "Payment result:", paymentResult);
+
+      // Format response based on payment method
+      let responseData: any = {
+        success: status !== "rejected",
+        orderId: order.id,
+        paymentStatus: status,
+        paymentId: paymentId,
+      };
+
+      // Add payment method specific data
+      if (paymentMethod === "pix" && paymentResult.point_of_interaction?.transaction_data?.qr_code) {
+        responseData.qrCode = paymentResult.point_of_interaction.transaction_data.qr_code;
+        responseData.qrCodeUrl = paymentResult.point_of_interaction.transaction_data.qr_code_url;
+      } else if (paymentMethod === "boleto" && paymentResult.transaction_details?.external_resource_url) {
+        responseData.boletoUrl = paymentResult.transaction_details.external_resource_url;
+        responseData.boletoBarcode = paymentResult.transaction_details.acquirer_reference?.replace(/\D/g, "");
+      }
+
+      res.json(responseData);
+    } catch (error: any) {
+      console.error("Payment creation error:", error);
+      res.status(500).json({
+        message: "Error processing payment",
+        error: error.message,
+      });
+    }
+  });
+
+  // Get Order
+  app.get("/api/orders/:id", async (req, res) => {
+    try {
+      const order = await storage.getOrder(parseInt(req.params.id));
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      res.json(order);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching order" });
+    }
+  });
+
+  // Seed site settings and products
   await seedSiteSettings();
+  await seedDatabase();
 
   return httpServer;
 }
 
 async function seedSiteSettings() {
   const existingSettings = await storage.getSiteSettings();
+
+  // Always ensure hero title and subtitle have correct watch-related content
+  await storage.upsertSiteSetting('hero_title', 'Relógios de Luxo');
+  await storage.upsertSiteSetting('hero_subtitle', 'Relógios de precisão suíça para o homem que valoriza qualidade. Materiais nobres, design atemporal e garantia vitalícia.');
+
+  // Only seed other defaults if no settings exist
   if (existingSettings.length === 0) {
-    await storage.upsertSiteSetting('hero_title', 'Modern Heirlooms');
-    await storage.upsertSiteSetting('hero_subtitle', 'Timeless jewelry designed to be lived in. Ethically sourced 14k gold and sterling silver.');
     await storage.upsertSiteSetting('hero_image', 'https://pixabay.com/get/gc50e991d87e6b90338e1db8a536d5858c26ed48ab4dfd250fb387bb85d7a33116b296a6303e8e3fcc45d5baef9694c54ffb2ec6d5fbd0aba6d004699ddb064a9_1280.jpg');
     console.log("Seeded database with site settings");
   }

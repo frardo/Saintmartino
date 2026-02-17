@@ -276,8 +276,6 @@ export function ProductFormDialog({
                       <SelectContent>
                         <SelectItem value="Relógio de Pulso">Relógio de Pulso</SelectItem>
                         <SelectItem value="Relógio de Bolso">Relógio de Bolso</SelectItem>
-                        <SelectItem value="Pulseira">Pulseira</SelectItem>
-                        <SelectItem value="Acessório">Acessório</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

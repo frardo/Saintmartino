@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import { Header } from "@/components/Header";
 import { ProductFormDialog } from "@/components/admin/ProductFormDialog";
+import { BannerFormDialog } from "@/components/admin/BannerFormDialog";
+import { ImagePositioner } from "@/components/ImagePositioner";
 import { useProducts } from "@/hooks/use-products";
+import { useUploadFile } from "@/hooks/use-upload-file";
 import {
   useSiteSettings,
   useCreateProduct,
@@ -63,11 +66,24 @@ export default function Admin() {
   const { toast } = useToast();
   const { data: products, isLoading: productsLoading } = useProducts();
   const { data: settings, isLoading: settingsLoading } = useSiteSettings();
+  const { uploadFile, isUploading } = useUploadFile();
+  const heroImageInputRef = useRef<HTMLInputElement>(null);
+
+  // Admin authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const [formOpen, setFormOpen] = useState(false);
+  const [bannerFormOpen, setBannerFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>();
+  const [editingBanner, setEditingBanner] = useState<any | undefined>();
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [settingsEdit, setSettingsEdit] = useState<Record<string, string>>({});
+  const [heroImages, setHeroImages] = useState<string[]>([]);
+  const [positioningImage, setPositioningImage] = useState<{ url: string; index: number } | null>(null);
+  const [imagePositions, setImagePositions] = useState<Record<number, { x: number; y: number; scale: number }>>({});
 
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
@@ -89,6 +105,78 @@ export default function Admin() {
     setEditingProduct(product);
     setFormOpen(true);
   };
+
+  const openCreateBannerDialog = () => {
+    setEditingBanner(undefined);
+    setBannerFormOpen(true);
+  };
+
+  const openEditBannerDialog = (banner: any) => {
+    setEditingBanner(banner);
+    setBannerFormOpen(true);
+  };
+
+  // Check authentication on mount
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const response = await fetch("/api/admin/check");
+      const data = await response.json();
+      setIsAuthenticated(data.isAdmin || false);
+    } catch (error) {
+      console.error("Auth check failed:", error);
+      setIsAuthenticated(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    setIsLoggingIn(true);
+
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+
+      if (response.ok) {
+        setIsAuthenticated(true);
+        setPassword("");
+        toast({ title: "Bem-vindo!", description: "Você entrou no painel admin." });
+      } else {
+        const error = await response.json();
+        setLoginError(error.message || "Senha incorreta");
+      }
+    } catch (error) {
+      setLoginError("Erro ao fazer login");
+      console.error("Login error:", error);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+      setIsAuthenticated(false);
+      setPassword("");
+      toast({ title: "Desconectado", description: "Você saiu do painel admin." });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  // Load settings into edit form when settings are loaded
+  useEffect(() => {
+    if (settings && Object.keys(settingsEdit).length === 0) {
+      initSettingsEdit();
+    }
+  }, [settings]);
 
   const handleProductSubmit = async (data: any) => {
     try {
@@ -135,22 +223,139 @@ export default function Admin() {
     }
   };
 
-  const handleSaveSettings = async () => {
+  const handleBannerSubmit = async (data: any) => {
     try {
-      for (const [key, value] of Object.entries(settingsEdit)) {
-        if (value.trim()) {
-          await updateSiteSetting.mutateAsync({ key, value });
-        }
-      }
-      setSettingsEdit({});
+      await createBanner.mutateAsync(data);
       toast({
-        title: "Settings saved",
-        description: "Site settings have been updated.",
+        title: "Banner criado",
+        description: "O novo banner foi adicionado com sucesso.",
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to save settings",
+        title: "Erro",
+        description: error.message || "Falha ao salvar o banner",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleHeroImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || heroImages.length >= 3) {
+      toast({
+        title: "Limite atingido",
+        description: "Máximo de 3 imagens para o hero.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const uploadedUrl = await uploadFile(file);
+      if (uploadedUrl) {
+        // Open image positioner
+        setPositioningImage({ url: uploadedUrl, index: heroImages.length });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: "Falha ao fazer upload da imagem.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePositionSave = async () => {
+    if (!positioningImage) return;
+
+    try {
+      // Avoid duplicates - check if image already exists
+      if (!heroImages.includes(positioningImage.url)) {
+        const newImages = [...heroImages, positioningImage.url];
+        setHeroImages(newImages);
+
+        // Save with correct index (count from 1)
+        const imageIndex = newImages.length;
+        const key = `hero_image_${imageIndex}`;
+
+        console.log(`Saving hero image ${imageIndex}:`, positioningImage.url);
+        await updateSiteSetting.mutateAsync({ key, value: positioningImage.url });
+
+        // Save position if adjusted
+        if (imagePositions[positioningImage.index]) {
+          const posKey = `hero_image_${imageIndex}_position`;
+          const pos = imagePositions[positioningImage.index];
+          console.log(`Saving position for image ${imageIndex}:`, pos);
+          await updateSiteSetting.mutateAsync({
+            key: posKey,
+            value: JSON.stringify(pos)
+          });
+        }
+
+        toast({
+          title: "Imagem adicionada",
+          description: `Imagem ${imageIndex} de 3 foi salva com sucesso.`,
+        });
+      }
+      setPositioningImage(null);
+    } catch (error: any) {
+      console.error("Error saving image:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao salvar a imagem: " + error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeHeroImage = async (index: number) => {
+    try {
+      const newImages = heroImages.filter((_, i) => i !== index);
+      setHeroImages(newImages);
+
+      // Clear all hero image entries
+      for (let i = 1; i <= 10; i++) {
+        await updateSiteSetting.mutateAsync({ key: `hero_image_${i}`, value: "" });
+        await updateSiteSetting.mutateAsync({ key: `hero_image_${i}_position`, value: "" });
+      }
+
+      // Re-save the remaining images with correct numbering
+      for (let i = 0; i < newImages.length; i++) {
+        const key = `hero_image_${i + 1}`;
+        await updateSiteSetting.mutateAsync({ key, value: newImages[i] });
+      }
+
+      toast({
+        title: "Imagem removida",
+        description: "Imagens reorganizadas com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: "Falha ao remover a imagem.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      // Save only text settings (skip hero_image_* keys - they are saved immediately)
+      for (const [key, value] of Object.entries(settingsEdit)) {
+        if (!key.startsWith("hero_image_") && value.trim()) {
+          await updateSiteSetting.mutateAsync({ key, value });
+        }
+      }
+
+      setSettingsEdit({});
+      toast({
+        title: "Configurações salvas",
+        description: "As configurações do site foram atualizadas com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Falha ao salvar as configurações",
         variant: "destructive",
       });
     }
@@ -159,12 +364,100 @@ export default function Admin() {
   const initSettingsEdit = () => {
     if (settings) {
       const edited: Record<string, string> = {};
+      const images: string[] = [];
       settings.forEach((s) => {
         edited[s.key] = s.value;
+        if (s.key.startsWith("hero_image_") && s.value && !s.key.includes("_position")) {
+          images.push(s.value);
+        }
       });
       setSettingsEdit(edited);
+      setHeroImages(images);
     }
   };
+
+  const cleanupHeroImages = async () => {
+    if (!settings) return;
+
+    try {
+      // Collect all non-empty hero images in order
+      const validImages: string[] = [];
+      for (let i = 1; i <= 10; i++) {
+        const setting = settings.find(s => s.key === `hero_image_${i}`);
+        if (setting?.value) {
+          validImages.push(setting.value);
+        }
+      }
+
+      // Clear all hero_image_* entries
+      for (let i = 1; i <= 10; i++) {
+        await updateSiteSetting.mutateAsync({ key: `hero_image_${i}`, value: "" });
+        await updateSiteSetting.mutateAsync({ key: `hero_image_${i}_position`, value: "" });
+      }
+
+      // Re-save them with correct sequential numbering
+      for (let i = 0; i < validImages.length; i++) {
+        await updateSiteSetting.mutateAsync({ key: `hero_image_${i + 1}`, value: validImages[i] });
+      }
+
+      // Reload
+      setHeroImages(validImages);
+      toast({
+        title: "Limpeza concluída",
+        description: `${validImages.length} imagens recompactadas com sucesso.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: "Falha ao limpar as imagens.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Login screen
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <Header />
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle className="font-serif text-2xl">Painel Admin</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Senha de Acesso</label>
+                  <Input
+                    type="password"
+                    placeholder="Digite sua senha"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoggingIn}
+                    className="mt-1"
+                  />
+                </div>
+                {loginError && (
+                  <div className="p-3 bg-destructive/10 border border-destructive/30 rounded text-sm text-destructive">
+                    {loginError}
+                  </div>
+                )}
+                <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                  {isLoggingIn ? "Entrando..." : "Entrar"}
+                </Button>
+              </form>
+              <p className="text-xs text-muted-foreground mt-4 text-center">
+                <Link href="/" className="text-primary hover:underline">
+                  ← Voltar para Loja
+                </Link>
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -178,6 +471,9 @@ export default function Admin() {
               ← Voltar para Loja
             </Link>
           </div>
+          <Button variant="outline" onClick={handleLogout} className="gap-2">
+            Sair
+          </Button>
         </div>
 
         <Tabs defaultValue="products" className="w-full">
@@ -338,29 +634,9 @@ export default function Admin() {
           <TabsContent value="banners" className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="font-serif text-2xl font-semibold">Banners</h2>
-              <Button onClick={() => {
-                const title = prompt("Banner title:");
-                if (title) {
-                  const subtitle = prompt("Subtitle (optional):");
-                  const imageUrl = prompt("Image URL:");
-                  const ctaText = prompt("CTA text (optional):");
-                  const ctaLink = prompt("CTA link (optional):");
-                  if (imageUrl) {
-                    createBanner.mutate({
-                      title,
-                      subtitle: subtitle || undefined,
-                      imageUrl,
-                      ctaText: ctaText || undefined,
-                      ctaLink: ctaLink || undefined,
-                      order: 0,
-                      isActive: true,
-                      createdAt: new Date().toISOString(),
-                    });
-                  }
-                }
-              }} className="gap-2">
+              <Button onClick={openCreateBannerDialog} className="gap-2">
                 <Plus className="h-4 w-4" />
-                Add Banner
+                Novo Banner
               </Button>
             </div>
             <BannersTab useBannersHook={useBanners} useDeleteBannerHook={useDeleteBanner} />
@@ -397,7 +673,7 @@ export default function Admin() {
                             hero_title: e.target.value,
                           })
                         }
-                        placeholder="Modern Heirlooms"
+                        placeholder="Relógios de Luxo"
                       />
                     </div>
 
@@ -417,59 +693,91 @@ export default function Admin() {
                             hero_subtitle: e.target.value,
                           })
                         }
-                        placeholder="Timeless jewelry..."
+                        placeholder="Relógios de precisão suíça para o homem que valoriza qualidade. Materiais nobres, design atemporal e garantia vitalícia."
                         rows={3}
                       />
                     </div>
 
                     <div>
                       <label className="text-sm font-medium mb-2 block">
-                        Hero Image URL
+                        Imagens do Hero (até 3 para carrossel)
                       </label>
-                      <Input
-                        value={
-                          settingsEdit["hero_image"] ||
-                          settings?.find((s) => s.key === "hero_image")?.value ||
-                          ""
-                        }
-                        onChange={(e) =>
-                          setSettingsEdit({
-                            ...settingsEdit,
-                            hero_image: e.target.value,
-                          })
-                        }
-                        placeholder="https://..."
-                      />
-                      {(settingsEdit["hero_image"] ||
-                        settings?.find((s) => s.key === "hero_image")?.value) && (
-                        <div className="mt-4">
-                          <img
-                            src={
-                              settingsEdit["hero_image"] ||
-                              settings?.find((s) => s.key === "hero_image")?.value ||
-                              ""
-                            }
-                            alt="Hero preview"
-                            className="max-h-48 rounded-lg object-cover"
-                          />
+                      <div className="space-y-3">
+                        {/* Hero Images Grid */}
+                        <div className="grid grid-cols-3 gap-2">
+                          {heroImages.map((image, idx) => (
+                            <div
+                              key={idx}
+                              className="relative aspect-video overflow-hidden rounded-lg border-2 bg-muted"
+                            >
+                              <img
+                                src={image}
+                                alt={`Hero ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeHeroImage(idx)}
+                                className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+
+                          {/* Add More Images Button */}
+                          {heroImages.length < 3 && (
+                            <button
+                              type="button"
+                              onClick={() => heroImageInputRef.current?.click()}
+                              disabled={isUploading}
+                              className="aspect-video rounded-lg border-2 border-dashed border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-50"
+                            >
+                              <span className="text-muted-foreground text-sm">+ Adicionar</span>
+                            </button>
+                          )}
                         </div>
-                      )}
+
+                        {/* Hidden File Input */}
+                        <input
+                          ref={heroImageInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleHeroImageUpload}
+                          disabled={isUploading}
+                          className="hidden"
+                        />
+
+                        {/* Info Text */}
+                        <p className="text-xs text-muted-foreground">
+                          {heroImages.length} de 3 imagens • As imagens vão girar automaticamente no hero
+                        </p>
+                      </div>
                     </div>
 
-                    <Button
-                      onClick={() => {
-                        if (Object.keys(settingsEdit).length === 0) {
-                          initSettingsEdit();
-                        } else {
-                          handleSaveSettings();
-                        }
-                      }}
-                      disabled={updateSiteSetting.isPending}
-                    >
-                      {updateSiteSetting.isPending
-                        ? "Saving..."
-                        : "Save Changes"}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => {
+                          if (Object.keys(settingsEdit).length === 0) {
+                            initSettingsEdit();
+                          } else {
+                            handleSaveSettings();
+                          }
+                        }}
+                        disabled={updateSiteSetting.isPending}
+                      >
+                        {updateSiteSetting.isPending
+                          ? "Saving..."
+                          : "Save Changes"}
+                      </Button>
+                      <Button
+                        onClick={cleanupHeroImages}
+                        disabled={updateSiteSetting.isPending}
+                        variant="outline"
+                      >
+                        Limpar Duplicatas
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -488,6 +796,48 @@ export default function Admin() {
           createProduct.isPending || updateProduct.isPending
         }
       />
+
+      {/* Banner Form Dialog */}
+      <BannerFormDialog
+        open={bannerFormOpen}
+        onOpenChange={setBannerFormOpen}
+        banner={editingBanner}
+        onSubmit={handleBannerSubmit}
+        isLoading={createBanner.isPending}
+      />
+
+      {/* Image Positioner Dialog */}
+      <Dialog open={!!positioningImage} onOpenChange={(open) => !open && setPositioningImage(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Ajustar Posição da Imagem do Hero</DialogTitle>
+          </DialogHeader>
+          {positioningImage && (
+            <div className="space-y-4">
+              <ImagePositioner
+                imageUrl={positioningImage.url}
+                onPositionChange={(pos) => {
+                  setImagePositions({
+                    ...imagePositions,
+                    [positioningImage.index]: pos
+                  });
+                }}
+              />
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setPositioningImage(null)}
+                >
+                  Cancelar
+                </Button>
+                <Button onClick={handlePositionSave}>
+                  Confirmar
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteConfirm !== null} onOpenChange={() => setDeleteConfirm(null)}>

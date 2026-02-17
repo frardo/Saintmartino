@@ -86,12 +86,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-2">
-            {/* Metal Swatches Mockup - Assuming generic variation logic for UI purposes */}
-            <div className="flex gap-1">
-              <div className="w-3 h-3 rounded-full bg-[#E5D0A1] border border-black/10" title="Gold" />
-              <div className="w-3 h-3 rounded-full bg-[#E0E0E0] border border-black/10" title="Silver" />
-            </div>
-            <span className="text-xs text-muted-foreground pl-1">
+            <span className="text-xs text-muted-foreground">
               {product.metal}
             </span>
           </div>

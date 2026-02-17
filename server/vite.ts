@@ -31,8 +31,17 @@ export async function setupVite(server: Server, app: Express) {
 
   app.use(vite.middlewares);
 
+  // Skip SPA fallback for API routes and static files
   app.use("/{*path}", async (req, res, next) => {
-    const url = req.originalUrl;
+    const url = req.originalUrl.split("?")[0]; // Remove query params
+
+    // Don't handle API routes, images, and static files with this catch-all
+    if (url.startsWith("/api/") || url.startsWith("/images/") || url.endsWith(".pdf") || url.endsWith(".json")) {
+      console.log("⏭️  Skipping SPA handler for:", url);
+      return next();
+    }
+
+    console.log("📄 Serving SPA for:", url);
 
     try {
       const clientTemplate = path.resolve(

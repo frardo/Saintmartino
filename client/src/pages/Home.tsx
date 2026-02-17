@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Header } from "@/components/Header";
 import { ProductCard } from "@/components/ProductCard";
 import { LifestyleCard } from "@/components/LifestyleCard";
 import { FilterBar } from "@/components/FilterBar";
 import { useProducts } from "@/hooks/use-products";
-import { useSiteSettings } from "@/hooks/use-admin";
+import { useSiteSettings, useBanners } from "@/hooks/use-admin";
 import { Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
   const [filters, setFilters] = useState({
@@ -17,12 +17,44 @@ export default function Home() {
     sort: "newest" as "newest" | "price_asc" | "price_desc",
   });
 
+  const [heroImageIndex, setHeroImageIndex] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 16; // 4 fileiras de 4 produtos
+
   const { data: products, isLoading, error } = useProducts(filters);
   const { data: settings } = useSiteSettings();
+  const { data: banners } = useBanners();
+
+  // Get hero images from settings
+  const heroImages = [
+    settings?.find(s => s.key === 'hero_image_1')?.value,
+    settings?.find(s => s.key === 'hero_image_2')?.value,
+    settings?.find(s => s.key === 'hero_image_3')?.value,
+  ].filter(Boolean) as string[];
+
+  // Fallback to legacy hero_image if no new images
+  const fallbackImage = settings?.find(s => s.key === 'hero_image')?.value;
+  const displayImages = heroImages.length > 0 ? heroImages : (fallbackImage ? [fallbackImage] : []);
 
   const heroTitle = settings?.find(s => s.key === 'hero_title')?.value || 'Relógios de Luxo';
-  const heroSubtitle = settings?.find(s => s.key === 'hero_subtitle')?.value || 'Relógios e pulseiras para o homem moderno. Precisão suíça e design atemporal em materiais nobres.';
-  const heroImage = settings?.find(s => s.key === 'hero_image')?.value || 'https://pixabay.com/get/gc50e991d87e6b90338e1db8a536d5858c26ed48ab4dfd250fb387bb85d7a33116b296a6303e8e3fcc45d5baef9694c54ffb2ec6d5fbd0aba6d004699ddb064a9_1280.jpg';
+  const heroSubtitle = settings?.find(s => s.key === 'hero_subtitle')?.value || 'Relógios de precisão suíça para o homem que valoriza qualidade. Materiais nobres, design atemporal e garantia vitalícia.';
+
+  // Reset página quando filtros mudam
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  // Auto-rotate hero images
+  useEffect(() => {
+    if (displayImages.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setHeroImageIndex((prev) => (prev + 1) % displayImages.length);
+    }, 5300); // Muda a cada 5.3 segundos
+
+    return () => clearInterval(interval);
+  }, [displayImages.length]);
+
 
   const container = {
     hidden: { opacity: 0 },
@@ -58,24 +90,61 @@ export default function Home() {
       <Header />
       
       <main className="pb-24">
-        {/* Hero Section */}
-        <section className="relative h-[60vh] w-full bg-[#EAE8E4] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0">
-            <img
-              src={heroImage}
+        {/* Hero Section with Carousel */}
+        <section className="relative h-[80vh] w-full bg-black overflow-hidden">
+          {/* Background Images Carousel */}
+          {displayImages.length > 0 ? (
+            <motion.img
+              key={heroImageIndex}
+              src={displayImages[heroImageIndex]}
               alt="Hero Background"
-              className="w-full h-full object-cover opacity-80"
+              className="absolute inset-0 w-full h-full object-cover"
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -100 }}
+              transition={{ duration: 1, ease: "easeInOut" }}
             />
-          </div>
-          <div className="relative z-10 text-center space-y-4 px-4">
-            <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl tracking-tight text-foreground/90">
-              {heroTitle}
-            </h1>
-            <p className="font-sans text-lg md:text-xl text-foreground/70 max-w-lg mx-auto">
-              {heroSubtitle}
-            </p>
-          </div>
+          ) : (
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-900 to-black" />
+          )}
+
+          {/* Image Indicators */}
+          {displayImages.length > 1 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+              {displayImages.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setHeroImageIndex(idx)}
+                  className={`h-2 rounded-full transition-all ${
+                    idx === heroImageIndex ? "bg-white w-6" : "bg-white/50 w-2"
+                  }`}
+                  aria-label={`Go to image ${idx + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </section>
+
+        {/* Banners Section */}
+        {banners && banners.length > 0 && (
+          <section className="w-full bg-background py-8">
+            <div className="container mx-auto px-4">
+              <div className="space-y-4">
+                {banners.filter(b => b.isActive).map((banner) => (
+                  <Link key={banner.id} href={banner.ctaLink || "/"} className="block group">
+                    <div className="relative h-80 md:h-[500px] overflow-hidden rounded-lg">
+                      <img
+                        src={banner.imageUrl}
+                        alt={banner.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         <FilterBar 
           activeType={filters.type || ""}
@@ -94,33 +163,86 @@ export default function Home() {
               Erro ao carregar a coleção. Tente novamente.
             </div>
           ) : (
-            <motion.div 
-              variants={container}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2"
-            >
-              {products?.map((product, idx) => {
-                const elements = [];
-                
-                // Insert Lifestyle Card at index 1
-                if (idx === 1 && !filters.type) {
-                  elements.push(
-                    <motion.div key="lifestyle-card" variants={item} className="col-span-1 sm:col-span-2 lg:col-span-1 row-span-2 h-full">
-                       <LifestyleCard />
-                    </motion.div>
-                  );
-                }
+            <>
+              {/* Calcular produtos da página atual */}
+              {products && products.length > 0 && (
+                <>
+                  <motion.div
+                    variants={container}
+                    initial="hidden"
+                    animate="show"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+                  >
+                    {products
+                      .slice(
+                        (currentPage - 1) * PRODUCTS_PER_PAGE,
+                        currentPage * PRODUCTS_PER_PAGE
+                      )
+                      .map((product, idx) => (
+                        <motion.div key={product.id} variants={item}>
+                          <ProductCard product={product} />
+                        </motion.div>
+                      ))}
 
-                elements.push(
-                  <motion.div key={product.id} variants={item}>
-                    <ProductCard product={product} />
+                    {!filters.type && products.length > 0 && currentPage === 1 && (
+                      <motion.div variants={item}>
+                        <LifestyleCard />
+                      </motion.div>
+                    )}
                   </motion.div>
-                );
 
-                return elements;
-              })}
-              
+                  {/* Paginação */}
+                  {Math.ceil(products.length / PRODUCTS_PER_PAGE) > 1 && (
+                    <div className="flex justify-center items-center gap-2 mt-12">
+                      <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 border border-border rounded hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        ← Anterior
+                      </button>
+
+                      <div className="flex gap-2">
+                        {Array.from(
+                          { length: Math.ceil(products.length / PRODUCTS_PER_PAGE) },
+                          (_, i) => i + 1
+                        ).map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`w-10 h-10 rounded font-semibold transition-colors ${
+                              currentPage === page
+                                ? "bg-foreground text-background"
+                                : "border border-border hover:bg-secondary"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          setCurrentPage(p =>
+                            Math.min(
+                              Math.ceil(products.length / PRODUCTS_PER_PAGE),
+                              p + 1
+                            )
+                          )
+                        }
+                        disabled={
+                          currentPage ===
+                          Math.ceil(products.length / PRODUCTS_PER_PAGE)
+                        }
+                        className="px-4 py-2 border border-border rounded hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Próximo →
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+
               {products?.length === 0 && (
                 <div className="col-span-full py-24 text-center">
                   <p className="text-lg text-muted-foreground">Nenhum produto encontrado com esses filtros.</p>
@@ -132,7 +254,7 @@ export default function Home() {
                   </button>
                 </div>
               )}
-            </motion.div>
+            </>
           )}
         </div>
       </main>
@@ -143,17 +265,16 @@ export default function Home() {
           <div className="space-y-6">
             <h4 className="font-serif text-2xl text-white">SAINT MARTINO</h4>
             <p className="text-sm leading-relaxed max-w-xs text-white/60">
-              Relógios de precisão e pulseiras de luxo para o homem que valoriza qualidade. Materiais nobres, design atemporal e garantia vitalícia.
+              Relógios de precisão suíça para o homem que valoriza qualidade. Materiais nobres, design atemporal e garantia vitalícia.
             </p>
           </div>
           
           <div className="space-y-4">
             <h5 className="font-sans font-medium text-white uppercase tracking-widest text-xs">Loja</h5>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/new" className="hover:text-white transition-colors">Novos Produtos</Link></li>
-              <li><Link href="/watches" className="hover:text-white transition-colors">Relógios</Link></li>
-              <li><Link href="/bracelets" className="hover:text-white transition-colors">Pulseiras</Link></li>
-              <li><Link href="/accessories" className="hover:text-white transition-colors">Acessórios</Link></li>
+              <li><Link href="/" className="hover:text-white transition-colors">Novos Produtos</Link></li>
+              <li><Link href="/?type=Relógio de Pulso" className="hover:text-white transition-colors">Relógios de Pulso</Link></li>
+              <li><Link href="/?type=Relógio de Bolso" className="hover:text-white transition-colors">Relógios de Bolso</Link></li>
             </ul>
           </div>
           

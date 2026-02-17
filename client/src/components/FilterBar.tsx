@@ -17,7 +17,6 @@ export function FilterBar({ activeType, onTypeChange, activeSort, onSortChange }
     { label: "Todos", value: "" },
     { label: "Relógio de Pulso", value: "Relógio de Pulso" },
     { label: "Relógio de Bolso", value: "Relógio de Bolso" },
-    { label: "Pulseiras", value: "Pulseira" },
   ];
 
   return (

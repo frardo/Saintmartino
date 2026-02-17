@@ -5,6 +5,7 @@ import {
   promotions,
   coupons,
   banners,
+  orders,
   type Product,
   type InsertProduct,
   type ProductRow,
@@ -15,9 +16,14 @@ import {
   type InsertCoupon,
   type Banner,
   type InsertBanner,
+  type Order,
+  type InsertOrder,
   type ProductsQueryParams
 } from "@shared/schema";
 import { eq, and, asc, desc } from "drizzle-orm";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // Helper functions for imageUrls JSON conversion
 function convertProductRow(row: ProductRow): Product {
@@ -49,6 +55,10 @@ export interface IStorage {
   getBanners(): Promise<Banner[]>;
   createBanner(banner: InsertBanner): Promise<Banner>;
   deleteBanner(id: number): Promise<boolean>;
+  createOrder(order: InsertOrder): Promise<Order>;
+  getOrder(id: number): Promise<Order | undefined>;
+  updateOrderStatus(id: number, status: string, paymentId?: string): Promise<Order | undefined>;
+  getOrders(): Promise<Order[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -132,6 +142,29 @@ export class DatabaseStorage implements IStorage {
       return created;
     }
   }
+
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const [created] = await db!.insert(orders).values(order).returning();
+    return created;
+  }
+
+  async getOrder(id: number): Promise<Order | undefined> {
+    const [order] = await db!.select().from(orders).where(eq(orders.id, id));
+    return order;
+  }
+
+  async updateOrderStatus(id: number, status: string, paymentId?: string): Promise<Order | undefined> {
+    const updates: any = { status };
+    if (paymentId) {
+      updates.paymentId = paymentId;
+    }
+    const [updated] = await db!.update(orders).set(updates).where(eq(orders.id, id)).returning();
+    return updated;
+  }
+
+  async getOrders(): Promise<Order[]> {
+    return await db!.select().from(orders);
+  }
 }
 
 export class MemoryStorage implements IStorage {
@@ -145,6 +178,100 @@ export class MemoryStorage implements IStorage {
   private nextPromotionId = 1;
   private nextCouponId = 1;
   private nextBannerId = 1;
+  private dataDir = path.join(process.cwd(), ".data");
+  private productsFile = path.join(this.dataDir, "products.json");
+  private settingsFile = path.join(this.dataDir, "settings.json");
+  private promotionsFile = path.join(this.dataDir, "promotions.json");
+  private couponsFile = path.join(this.dataDir, "coupons.json");
+  private bannersFile = path.join(this.dataDir, "banners.json");
+
+  constructor() {
+    this.ensureDataDir();
+    this.loadFromFiles();
+  }
+
+  private ensureDataDir() {
+    if (!fs.existsSync(this.dataDir)) {
+      fs.mkdirSync(this.dataDir, { recursive: true });
+    }
+  }
+
+  private loadFromFiles() {
+    try {
+      if (fs.existsSync(this.productsFile)) {
+        const data = JSON.parse(fs.readFileSync(this.productsFile, "utf-8"));
+        this.products = data.products || [];
+        this.nextId = data.nextId || 1;
+      }
+      if (fs.existsSync(this.settingsFile)) {
+        const data = JSON.parse(fs.readFileSync(this.settingsFile, "utf-8"));
+        this.settings = data.settings || [];
+        this.nextSettingId = data.nextId || 1;
+      }
+      if (fs.existsSync(this.promotionsFile)) {
+        const data = JSON.parse(fs.readFileSync(this.promotionsFile, "utf-8"));
+        this.promotionsList = data.promotions || [];
+        this.nextPromotionId = data.nextId || 1;
+      }
+      if (fs.existsSync(this.couponsFile)) {
+        const data = JSON.parse(fs.readFileSync(this.couponsFile, "utf-8"));
+        this.couponsList = data.coupons || [];
+        this.nextCouponId = data.nextId || 1;
+      }
+      if (fs.existsSync(this.bannersFile)) {
+        const data = JSON.parse(fs.readFileSync(this.bannersFile, "utf-8"));
+        this.bannersList = data.banners || [];
+        this.nextBannerId = data.nextId || 1;
+      }
+      if (fs.existsSync(this.ordersFile)) {
+        const data = JSON.parse(fs.readFileSync(this.ordersFile, "utf-8"));
+        this.ordersList = data.orders || [];
+        this.nextOrderId = data.nextId || 1;
+      }
+    } catch (error) {
+      console.error("Error loading data from files:", error);
+    }
+  }
+
+  private saveProducts() {
+    try {
+      fs.writeFileSync(this.productsFile, JSON.stringify({ products: this.products, nextId: this.nextId }, null, 2));
+    } catch (error) {
+      console.error("Error saving products:", error);
+    }
+  }
+
+  private saveSettings() {
+    try {
+      fs.writeFileSync(this.settingsFile, JSON.stringify({ settings: this.settings, nextId: this.nextSettingId }, null, 2));
+    } catch (error) {
+      console.error("Error saving settings:", error);
+    }
+  }
+
+  private savePromotions() {
+    try {
+      fs.writeFileSync(this.promotionsFile, JSON.stringify({ promotions: this.promotionsList, nextId: this.nextPromotionId }, null, 2));
+    } catch (error) {
+      console.error("Error saving promotions:", error);
+    }
+  }
+
+  private saveCoupons() {
+    try {
+      fs.writeFileSync(this.couponsFile, JSON.stringify({ coupons: this.couponsList, nextId: this.nextCouponId }, null, 2));
+    } catch (error) {
+      console.error("Error saving coupons:", error);
+    }
+  }
+
+  private saveBanners() {
+    try {
+      fs.writeFileSync(this.bannersFile, JSON.stringify({ banners: this.bannersList, nextId: this.nextBannerId }, null, 2));
+    } catch (error) {
+      console.error("Error saving banners:", error);
+    }
+  }
 
   async getProducts(params?: ProductsQueryParams): Promise<Product[]> {
     let result = [...this.products];
@@ -189,6 +316,7 @@ export class MemoryStorage implements IStorage {
       discountLabel: insertProduct.discountLabel ?? null,
     };
     this.products.push(product);
+    this.saveProducts();
     return product;
   }
 
@@ -196,6 +324,7 @@ export class MemoryStorage implements IStorage {
     const index = this.products.findIndex(p => p.id === id);
     if (index === -1) return undefined;
     this.products[index] = { ...this.products[index], ...updates };
+    this.saveProducts();
     return this.products[index];
   }
 
@@ -203,6 +332,7 @@ export class MemoryStorage implements IStorage {
     const index = this.products.findIndex(p => p.id === id);
     if (index === -1) return false;
     this.products.splice(index, 1);
+    this.saveProducts();
     return true;
   }
 
@@ -218,10 +348,12 @@ export class MemoryStorage implements IStorage {
     const existing = this.settings.find(s => s.key === key);
     if (existing) {
       existing.value = value;
+      this.saveSettings();
       return existing;
     } else {
       const setting: SiteSetting = { id: this.nextSettingId++, key, value };
       this.settings.push(setting);
+      this.saveSettings();
       return setting;
     }
   }
@@ -240,6 +372,7 @@ export class MemoryStorage implements IStorage {
       createdAt: insertPromotion.createdAt,
     };
     this.promotionsList.push(promotion);
+    this.savePromotions();
     return promotion;
   }
 
@@ -247,6 +380,7 @@ export class MemoryStorage implements IStorage {
     const index = this.promotionsList.findIndex(p => p.id === id);
     if (index === -1) return false;
     this.promotionsList.splice(index, 1);
+    this.savePromotions();
     return true;
   }
 
@@ -265,6 +399,7 @@ export class MemoryStorage implements IStorage {
       createdAt: insertCoupon.createdAt,
     };
     this.couponsList.push(coupon);
+    this.saveCoupons();
     return coupon;
   }
 
@@ -272,6 +407,7 @@ export class MemoryStorage implements IStorage {
     const index = this.couponsList.findIndex(c => c.id === id);
     if (index === -1) return false;
     this.couponsList.splice(index, 1);
+    this.saveCoupons();
     return true;
   }
 
@@ -292,6 +428,7 @@ export class MemoryStorage implements IStorage {
       createdAt: insertBanner.createdAt,
     };
     this.bannersList.push(banner);
+    this.saveBanners();
     return banner;
   }
 
@@ -299,8 +436,62 @@ export class MemoryStorage implements IStorage {
     const index = this.bannersList.findIndex(b => b.id === id);
     if (index === -1) return false;
     this.bannersList.splice(index, 1);
+    this.saveBanners();
     return true;
+  }
+
+  private ordersList: Order[] = [];
+  private nextOrderId = 1;
+  private ordersFile = path.join(this.dataDir, "orders.json");
+
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const newOrder: Order = {
+      id: this.nextOrderId++,
+      ...order,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as Order;
+    this.ordersList.push(newOrder);
+    this.saveOrders();
+    return newOrder;
+  }
+
+  async getOrder(id: number): Promise<Order | undefined> {
+    return this.ordersList.find(o => o.id === id);
+  }
+
+  async updateOrderStatus(id: number, status: string, paymentId?: string): Promise<Order | undefined> {
+    const order = this.ordersList.find(o => o.id === id);
+    if (!order) return undefined;
+    order.status = status;
+    if (paymentId) {
+      order.paymentId = paymentId;
+    }
+    order.updatedAt = new Date();
+    this.saveOrders();
+    return order;
+  }
+
+  async getOrders(): Promise<Order[]> {
+    return [...this.ordersList];
+  }
+
+  private saveOrders() {
+    try {
+      fs.writeFileSync(this.ordersFile, JSON.stringify({ orders: this.ordersList, nextId: this.nextOrderId }, null, 2));
+    } catch (error) {
+      console.error("Error saving orders:", error);
+    }
   }
 }
 
-export const storage: IStorage = db ? new DatabaseStorage() : new MemoryStorage();
+let memoryStorageInstance: MemoryStorage | null = null;
+
+function getMemoryStorage(): MemoryStorage {
+  if (!memoryStorageInstance) {
+    memoryStorageInstance = new MemoryStorage();
+  }
+  return memoryStorageInstance;
+}
+
+export const storage: IStorage = db ? new DatabaseStorage() : getMemoryStorage();
