@@ -539,7 +539,7 @@ export default function Admin() {
                           )}
                         </TableCell>
                         <TableCell>{product.type}</TableCell>
-                        <TableCell>{product.metal}</TableCell>
+                        <TableCell>{product.material}</TableCell>
                         <TableCell>
                           {product.isNew ? (
                             <Badge>Novo</Badge>

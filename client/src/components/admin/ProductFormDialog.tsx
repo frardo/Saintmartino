@@ -70,7 +70,7 @@ export function ProductFormDialog({
       description: product.description ?? undefined,
       price: product.price,
       type: product.type,
-      metal: product.metal,
+      material: product.material,
       stone: product.stone ?? undefined,
       isNew: product.isNew,
       discountPercent: product.discountPercent,
@@ -186,7 +186,7 @@ export function ProductFormDialog({
         description: formData.description || undefined,
         price: formData.price || undefined,
         type: formData.type || undefined,
-        metal: formData.metal || undefined,
+        material: formData.material || undefined,
         stone: formData.stone || undefined,
         imageUrls: allImageUrls.length > 0 ? allImageUrls : undefined,
         isNew: formData.isNew ?? false,
@@ -287,7 +287,7 @@ export function ProductFormDialog({
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="metal"
+                name="material"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Material</FormLabel>

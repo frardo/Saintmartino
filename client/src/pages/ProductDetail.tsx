@@ -157,7 +157,7 @@ export default function ProductDetail() {
           <div className="flex flex-col pt-4 md:pt-12">
             <div className="mb-2">
               <span className="text-xs uppercase tracking-widest text-muted-foreground">
-                {product.material || product.metal} {product.stone && `• ${product.stone}`}
+                {product.material} {product.stone && `• ${product.stone}`}
               </span>
             </div>
 
@@ -182,7 +182,7 @@ export default function ProductDetail() {
             <div className="mb-8 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Material:</span>
-                <span className="font-medium">{product.material || product.metal}</span>
+                <span className="font-medium">{product.material}</span>
               </div>
               {product.type && (
                 <div className="flex justify-between text-sm">
@@ -220,7 +220,7 @@ export default function ProductDetail() {
             <div className="prose prose-sm text-muted-foreground mb-10 max-w-md">
               <p>
                 {product.description ||
-                  `Fabricado em ${product.metal}, este ${product.type?.toLowerCase()} é projetado
+                  `Fabricado em ${product.material}, este ${product.type?.toLowerCase()} é projetado
                   para ser uma adição atemporal à sua coleção.
                   ${product.isNew ? " Parte de nosso lançamento de coleção mais recente." : ""}`}
               </p>

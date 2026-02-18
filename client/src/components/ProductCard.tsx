@@ -87,7 +87,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">
-              {product.metal}
+              {product.material}
             </span>
           </div>
           {product.discountPercent > 0 && product.discountLabel && (

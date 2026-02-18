@@ -307,7 +307,7 @@ export default function Cart() {
                       </h3>
                     </Link>
                     <p className="text-sm text-muted-foreground">
-                      {item.product.metal} {item.product.stone && `• ${item.product.stone}`}
+                      {item.product.material} {item.product.stone && `• ${item.product.stone}`}
                     </p>
                     <p className="font-semibold text-lg">
                       R$ {(Number(item.product.price) * item.quantity).toFixed(2)}

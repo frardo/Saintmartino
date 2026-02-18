@@ -479,7 +479,7 @@ export async function registerRoutes(
 
           return {
             title: product.name,
-            description: `${product.metal}${product.stone ? ` • ${product.stone}` : ""}`,
+            description: `${product.material}${product.stone ? ` • ${product.stone}` : ""}`,
             quantity: item.quantity,
             currency_id: "BRL",
             unit_price: parseFloat(product.price),
@@ -779,7 +779,7 @@ async function seedDatabase() {
         description: "Relógio de pulso sofisticado em ouro 18k com movimento automático suíço. Mostrador branco com índices em diamante, resistente à água até 50m. Ideal para ocasiões especiais.",
         price: "2890.00",
         type: "Relógio de Pulso",
-        metal: "Ouro 18k",
+        material: "Ouro 18k",
         stone: "Diamante",
         imageUrls: [
           "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=800&auto=format&fit=crop",
@@ -791,7 +791,7 @@ async function seedDatabase() {
         description: "Relógio elegante em prata 925 com design minimalista. Movimento quartz de precisão, vidro de safira anti-reflexo, resistente à água até 30m. Perfeito para uso diário.",
         price: "890.00",
         type: "Relógio de Pulso",
-        metal: "Prata 925",
+        material: "Prata 925",
         stone: null,
         imageUrls: [
           "https://images.unsplash.com/photo-1517836357463-d25ddfcbf042?q=80&w=800&auto=format&fit=crop",
@@ -803,7 +803,7 @@ async function seedDatabase() {
         description: "Relógio contemporâneo em ouro rose 14k com mostrador azul safira. Movimento automático, resistente à água até 100m. Um luxo discreto e sofisticado.",
         price: "1890.00",
         type: "Relógio de Pulso",
-        metal: "Ouro Rose 14k",
+        material: "Ouro Rose 14k",
         stone: "Safira",
         imageUrls: [
           "https://images.unsplash.com/photo-1505778276668-fc86f37cd1f5?q=80&w=800&auto=format&fit=crop",
@@ -815,7 +815,7 @@ async function seedDatabase() {
         description: "Relógio resistente em aço inoxidável 316L com movimento quartz. Mostrador preto com índices fluorescentes, resistente à água até 200m. Ideal para atividades aquáticas.",
         price: "1290.00",
         type: "Relógio de Pulso",
-        metal: "Aço Inoxidável",
+        material: "Aço Inoxidável",
         stone: null,
         imageUrls: [
           "https://images.unsplash.com/photo-1539815274047-0d3b3b676b0e?q=80&w=800&auto=format&fit=crop",
@@ -827,7 +827,7 @@ async function seedDatabase() {
         description: "Relógio ultramoderno em titânio puro com movimento automático. Extremamente leve e durável, resistente à água até 300m. Cronógrafo funcional integrado.",
         price: "3290.00",
         type: "Relógio de Pulso",
-        metal: "Titânio",
+        material: "Titânio",
         stone: null,
         imageUrls: [
           "https://images.unsplash.com/photo-1604365860552-30c254cf1681?q=80&w=800&auto=format&fit=crop",
@@ -839,7 +839,7 @@ async function seedDatabase() {
         description: "Relógio de bolso em ouro amarelo 24k com movimento manual vintage. Restaurado e polido à perfeição, uma peça de colecionador com capa em couro genuíno.",
         price: "4590.00",
         type: "Relógio de Bolso",
-        metal: "Ouro 24k",
+        material: "Ouro 24k",
         stone: null,
         imageUrls: [
           "https://images.unsplash.com/photo-1505634346881-b72b27e84530?q=80&w=800&auto=format&fit=crop",
@@ -862,7 +862,7 @@ async function seedDatabaseForced() {
       description: "Relógio de pulso sofisticado em ouro 18k com movimento automático suíço. Mostrador branco com índices em diamante, resistente à água até 50m. Ideal para ocasiões especiais.",
       price: "2890.00",
       type: "Relógio de Pulso",
-      metal: "Ouro 18k",
+      material: "Ouro 18k",
       stone: "Diamante",
       imageUrls: [
         "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=800&auto=format&fit=crop",
@@ -874,7 +874,7 @@ async function seedDatabaseForced() {
       description: "Relógio elegante em prata 925 com design minimalista. Movimento quartz de precisão, vidro de safira anti-reflexo, resistente à água até 30m. Perfeito para uso diário.",
       price: "890.00",
       type: "Relógio de Pulso",
-      metal: "Prata 925",
+      material: "Prata 925",
       stone: null,
       imageUrls: [
         "https://images.unsplash.com/photo-1517836357463-d25ddfcbf042?q=80&w=800&auto=format&fit=crop",
@@ -886,7 +886,7 @@ async function seedDatabaseForced() {
       description: "Relógio contemporâneo em ouro rose 14k com mostrador azul safira. Movimento automático, resistente à água até 100m. Um luxo discreto e sofisticado.",
       price: "1890.00",
       type: "Relógio de Pulso",
-      metal: "Ouro Rose 14k",
+      material: "Ouro Rose 14k",
       stone: "Safira",
       imageUrls: [
         "https://images.unsplash.com/photo-1505778276668-fc86f37cd1f5?q=80&w=800&auto=format&fit=crop",
@@ -898,7 +898,7 @@ async function seedDatabaseForced() {
       description: "Relógio resistente em aço inoxidável 316L com movimento quartz. Mostrador preto com índices fluorescentes, resistente à água até 200m. Ideal para atividades aquáticas.",
       price: "1290.00",
       type: "Relógio de Pulso",
-      metal: "Aço Inoxidável",
+      material: "Aço Inoxidável",
       stone: null,
       imageUrls: [
         "https://images.unsplash.com/photo-1539815274047-0d3b3b676b0e?q=80&w=800&auto=format&fit=crop",
@@ -910,7 +910,7 @@ async function seedDatabaseForced() {
       description: "Relógio ultramoderno em titânio puro com movimento automático. Extremamente leve e durável, resistente à água até 300m. Cronógrafo funcional integrado.",
       price: "3290.00",
       type: "Relógio de Pulso",
-      metal: "Titânio",
+      material: "Titânio",
       stone: null,
       imageUrls: [
         "https://images.unsplash.com/photo-1604365860552-30c254cf1681?q=80&w=800&auto=format&fit=crop",
@@ -922,7 +922,7 @@ async function seedDatabaseForced() {
       description: "Relógio de bolso em ouro amarelo 24k com movimento manual vintage. Restaurado e polido à perfeição, uma peça de colecionador com capa em couro genuíno.",
       price: "4590.00",
       type: "Relógio de Bolso",
-      metal: "Ouro 24k",
+      material: "Ouro 24k",
       stone: null,
       imageUrls: [
         "https://images.unsplash.com/photo-1505634346881-b72b27e84530?q=80&w=800&auto=format&fit=crop",
