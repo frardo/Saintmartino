@@ -753,15 +753,17 @@ export async function registerRoutes(
   // Create test order
   app.post("/api/test/create-order", async (req, res) => {
     try {
-      const testOrder = await storage.createOrder({
+      console.log("📝 Creating test order...");
+
+      const orderData = {
         status: "pending",
         total: "2890.00",
-        paymentMethod: "test",
-        paymentId: `TEST-${Date.now()}`,
         customerName: "Cliente Teste",
         customerEmail: "teste@saintmartino.com",
         customerPhone: "+55 11 9999-9999",
         customerCpf: "123.456.789-00",
+        paymentMethod: "test",
+        paymentId: `TEST-${Date.now()}`,
         shippingAddress: {
           cep: "01310-100",
           street: "Avenida Paulista",
@@ -769,7 +771,7 @@ export async function registerRoutes(
           neighborhood: "Bela Vista",
           city: "São Paulo",
           state: "SP",
-        } as any,
+        },
         items: [
           {
             productId: 1,
@@ -777,21 +779,28 @@ export async function registerRoutes(
             price: "2890.00",
             quantity: 1,
           },
-        ] as any,
-      });
+        ],
+      } as any;
 
-      console.log("✅ Test order created:", testOrder.id);
+      console.log("📦 Order data:", JSON.stringify(orderData, null, 2));
+
+      const testOrder = await storage.createOrder(orderData);
+
+      console.log("✅ Test order created successfully:", testOrder.id);
       res.json({
         success: true,
         orderId: testOrder.id,
         message: "Pedido de teste criado com sucesso!",
       });
     } catch (error: any) {
-      console.error("❌ Error creating test order:", error.message);
-      console.error("Stack:", error.stack);
+      console.error("❌ Error creating test order");
+      console.error("Error message:", error.message);
+      console.error("Error code:", error.code);
+      console.error("Stack trace:", error.stack);
       res.status(500).json({
         message: "Erro ao criar pedido de teste",
-        error: error.message
+        error: error.message,
+        code: error.code
       });
     }
   });
