@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useSearch } from "wouter";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Loader2, AlertCircle, CheckCircle2, Package, ChevronRight, Search } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, Package, ChevronRight, Truck } from "lucide-react";
 
 interface TrackingStatus {
   status: "pending" | "processing" | "shipped" | "delivered";
@@ -258,7 +258,7 @@ export default function Tracking() {
                   </>
                 ) : (
                   <>
-                    <Search className="h-5 w-5" />
+                    <Truck className="h-5 w-5" />
                     <span className="hidden sm:inline">Rastrear</span>
                   </>
                 )}
