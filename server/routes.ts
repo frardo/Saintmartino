@@ -5,13 +5,11 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
-import { fileURLToPath } from "url";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import https from "https";
 import { passport } from "./auth";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = process.cwd();
 
 // Configure multer for file uploads - use process.cwd() for absolute path
 const uploadDir = path.join(process.cwd(), "public", "images");
