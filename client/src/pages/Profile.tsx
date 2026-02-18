@@ -111,7 +111,7 @@ function AddressesSection({ userId }: { userId?: number }) {
   const { data: addressesData, isLoading } = useQuery({
     queryKey: ["/api/user/addresses"],
     queryFn: async () => {
-      const response = await apiRequest("/api/user/addresses");
+      const response = await apiRequest("GET", "/api/user/addresses");
       return response.json() as Promise<UserAddress[]>;
     },
     enabled: !!userId,
@@ -141,10 +141,7 @@ function AddressesSection({ userId }: { userId?: number }) {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const response = await apiRequest("/api/user/addresses", {
-        method: "POST",
-        body: JSON.stringify(formData),
-      });
+      const response = await apiRequest("POST", "/api/user/addresses", formData);
       if (response.ok) {
         const newAddress = await response.json();
         setAddresses([newAddress]);
@@ -222,7 +219,7 @@ function FavoritesSection({ userId }: { userId?: number }) {
   const { data: favoritesData, isLoading } = useQuery({
     queryKey: ["/api/user/favorites"],
     queryFn: async () => {
-      const response = await apiRequest("/api/user/favorites");
+      const response = await apiRequest("GET", "/api/user/favorites");
       return response.json() as Promise<{ favorites: number[] }>;
     },
     enabled: !!userId,

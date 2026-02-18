@@ -15,7 +15,7 @@ export function useAuth() {
     queryKey: ["/api/auth/me"],
     queryFn: async () => {
       try {
-        const response = await apiRequest("/api/auth/me");
+        const response = await apiRequest("GET", "/api/auth/me");
         if (response.status === 401) {
           console.log("🔐 User not authenticated");
           return null;

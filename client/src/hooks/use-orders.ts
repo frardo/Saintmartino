@@ -29,7 +29,7 @@ export function useOrders() {
     queryKey: ["/api/user/orders"],
     queryFn: async () => {
       try {
-        const response = await apiRequest("/api/user/orders");
+        const response = await apiRequest("GET", "/api/user/orders");
         if (!response.ok) {
           throw new Error("Falha ao buscar pedidos");
         }
