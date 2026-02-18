@@ -8,6 +8,8 @@ import path from "path";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import https from "https";
 import { passport } from "./auth";
+import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
 
 const __dirname = process.cwd();
 
@@ -238,10 +240,22 @@ export async function registerRoutes(
     res.json({ isAdmin: !!req.session?.isAdmin });
   });
 
+  // Configure Cloudinary
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+
   // File upload endpoint - using Cloudinary
   app.post("/api/upload", requireAdmin, (req, res) => {
     try {
       console.log("=== UPLOAD REQUEST RECEIVED ===");
+      console.log("Cloudinary config:", {
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? "✅ SET" : "❌ MISSING",
+        api_key: process.env.CLOUDINARY_API_KEY ? "✅ SET" : "❌ MISSING",
+        api_secret: process.env.CLOUDINARY_API_SECRET ? "✅ SET" : "❌ MISSING",
+      });
 
       upload.single("file")(req, res, async (err) => {
         try {
@@ -255,12 +269,10 @@ export async function registerRoutes(
             return res.status(400).json({ message: "No file provided" });
           }
 
-          // Upload to Cloudinary
-          const { v2: cloudinary } = require("cloudinary");
-          cloudinary.config({
-            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-            api_key: process.env.CLOUDINARY_API_KEY,
-            api_secret: process.env.CLOUDINARY_API_SECRET,
+          console.log("File received, uploading to Cloudinary:", {
+            filename: req.file.originalname,
+            size: req.file.size,
+            mimetype: req.file.mimetype,
           });
 
           const uploadResult = await cloudinary.uploader.upload(req.file.path, {
@@ -269,25 +281,27 @@ export async function registerRoutes(
           });
 
           // Delete the temporary file
-          fs.unlinkSync(req.file.path);
+          if (fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+          }
 
-          console.log("File uploaded to Cloudinary successfully:", {
+          console.log("✅ File uploaded to Cloudinary successfully:", {
             filename: req.file.originalname,
             url: uploadResult.secure_url,
           });
 
           return res.status(201).json({ url: uploadResult.secure_url });
         } catch (innerErr) {
-          console.error("Error in upload callback:", innerErr);
+          console.error("❌ Error in upload callback:", innerErr);
           // Delete temp file on error
           if (req.file?.path && fs.existsSync(req.file.path)) {
             fs.unlinkSync(req.file.path);
           }
-          return res.status(500).json({ message: "Internal server error during upload" });
+          return res.status(500).json({ message: `Upload failed: ${innerErr instanceof Error ? innerErr.message : "Unknown error"}` });
         }
       });
     } catch (outerErr) {
-      console.error("Error in upload endpoint:", outerErr);
+      console.error("❌ Error in upload endpoint:", outerErr);
       res.status(500).json({ message: "Internal server error" });
     }
   });
