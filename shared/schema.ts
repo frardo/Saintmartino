@@ -8,11 +8,12 @@ export const products = pgTable("products", {
   name: text("name"),
   description: text("description"),
   price: decimal("price"),
-  type: text("type"), // Ring, Necklace, etc.
-  metal: text("metal"), // Gold, Silver, etc.
-  stone: text("stone"), // Diamond, Pearl, etc.
+  type: text("type"), // Relógio de Pulso, Relógio de Bolso, etc.
+  material: text("material"), // Material customizável (ex: Ouro 14k, Titânio, etc.)
+  stone: text("stone"), // Pedra/Detalhe (ex: Safira, Diamante, etc.)
   imageUrls: text("image_urls"), // JSON array of image URLs
   isNew: boolean("is_new").default(false),
+  rating: decimal("rating").default("0"), // 0-5 com uma casa decimal (4.5, 3.0, etc.)
   discountPercent: integer("discount_percent").default(0),
   discountLabel: text("discount_label"),
 });
@@ -111,10 +112,12 @@ export const insertProductSchema = z.object({
   description: z.string().optional(),
   price: z.coerce.string().optional(), // Keep as string for decimal
   type: z.string().optional(),
-  metal: z.string().optional(),
+  material: z.string().optional(), // Material customizável
+  metal: z.string().optional(), // Mantido para compatibilidade
   stone: z.string().optional(),
   imageUrls: z.array(z.string()).optional().default([]),
   isNew: z.boolean().optional(),
+  rating: z.coerce.number().min(0).max(5).optional(), // 0-5 estrelas
   discountPercent: z.coerce.number().min(0).max(100).optional(),
   discountLabel: z.string().optional(),
 });

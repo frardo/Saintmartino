@@ -3,6 +3,7 @@ import { useProduct, useProducts } from "@/hooks/use-products";
 import { useCart } from "@/hooks/use-cart";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { StarRating } from "@/components/StarRating";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -156,9 +157,16 @@ export default function ProductDetail() {
           <div className="flex flex-col pt-4 md:pt-12">
             <div className="mb-2">
               <span className="text-xs uppercase tracking-widest text-muted-foreground">
-                {product.metal} {product.stone && `• ${product.stone}`}
+                {product.material || product.metal} {product.stone && `• ${product.stone}`}
               </span>
             </div>
+
+            {/* Star Rating */}
+            {product.rating && parseFloat(product.rating as string) > 0 && (
+              <div className="mb-4">
+                <StarRating rating={product.rating} size="md" showValue />
+              </div>
+            )}
 
             <h1 className="font-serif text-3xl md:text-5xl mb-4 text-foreground">
               {product.name}
@@ -174,7 +182,7 @@ export default function ProductDetail() {
             <div className="mb-8 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Material:</span>
-                <span className="font-medium">{product.metal}</span>
+                <span className="font-medium">{product.material || product.metal}</span>
               </div>
               {product.type && (
                 <div className="flex justify-between text-sm">
