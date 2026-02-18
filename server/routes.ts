@@ -2,7 +2,7 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
-import { orders } from "@shared/schema";
+import { orders, trackingEvents } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -737,27 +737,45 @@ export async function registerRoutes(
     }
   });
 
-  // Get Order
+  // Get Order with tracking events
   app.get("/api/orders/:id", async (req, res) => {
     try {
+      const { db } = await import("./db");
+      const { eq } = await import("drizzle-orm");
+
       const order = await storage.getOrder(parseInt(req.params.id));
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
-      res.json(order);
+
+      // Get tracking events for this order
+      const events = await db!.select().from(trackingEvents).where(eq(trackingEvents.orderId, parseInt(req.params.id)));
+
+      // Get events up to current day
+      const currentDay = (order as any).trackingDay || 0;
+      const visibleEvents = events.filter((e: any) => e.day <= currentDay);
+
+      res.json({
+        ...order,
+        trackingEvents: visibleEvents,
+        currentTrackingDay: currentDay,
+        maxTrackingDays: 9,
+      });
     } catch (error: any) {
-      res.status(500).json({ message: "Error fetching order" });
+      console.error("Error fetching order:", error);
+      res.status(500).json({ message: "Error fetching order", error: error.message });
     }
   });
 
   // === TEST ENDPOINTS ===
-  // Create test order
+  // Create test order with realistic tracking events
   app.post("/api/test/create-order", async (req, res) => {
     try {
       console.log("📝 Creating test order...");
 
       // Use database directly to avoid schema issues
       const { db } = await import("./db");
+      const { trackingEvents } = await import("@shared/schema");
 
       const [testOrder] = await db!.insert(orders).values({
         status: "pending",
@@ -768,6 +786,7 @@ export async function registerRoutes(
         customerCpf: "123.456.789-00",
         paymentMethod: "test",
         paymentId: `TEST-${Date.now()}`,
+        trackingDay: 0,
         shippingAddress: {
           cep: "01310-100",
           street: "Avenida Paulista",
@@ -786,6 +805,27 @@ export async function registerRoutes(
         ] as any,
       }).returning();
 
+      // Create realistic 9-day tracking timeline
+      const trackingTimeline = [
+        { day: 0, status: "pending", location: "Armazém - Alemanha", description: "Pedido confirmado e em processamento" },
+        { day: 1, status: "embalado", location: "Armazém - Alemanha", description: "Pedido embalado e pronto para envio" },
+        { day: 2, status: "saiu_alemanha", location: "Centro Postal - Frankfurt", description: "Saiu da Alemanha em direção ao Brasil" },
+        { day: 3, status: "em_transito", location: "Em Trânsito Aéreo", description: "Em voo internacional para o Brasil" },
+        { day: 4, status: "em_transito", location: "Em Trânsito Aéreo", description: "Continuando voo para o Brasil" },
+        { day: 5, status: "alfandega", location: "Alfândega - Aeroporto Internacional", description: "Passando pela alfândega brasileira" },
+        { day: 6, status: "em_transito_br", location: "Distribuição - São Paulo", description: "Em distribuição no Brasil" },
+        { day: 7, status: "em_transito_br", location: "Distribuição Regional", description: "Saiu para entrega" },
+        { day: 8, status: "em_transito_br", location: "Centro de Distribuição Local", description: "Chegou ao centro local" },
+        { day: 9, status: "entregue", location: "Endereço do Cliente - São Paulo", description: "Entregue com sucesso" },
+      ];
+
+      for (const event of trackingTimeline) {
+        await db!.insert(trackingEvents).values({
+          orderId: testOrder.id,
+          ...event,
+        });
+      }
+
       console.log("✅ Test order created successfully:", testOrder.id);
       res.json({
         success: true,
@@ -801,33 +841,40 @@ export async function registerRoutes(
     }
   });
 
-  // Advance order status
+  // Advance order status by 1 day
   app.post("/api/test/advance-status/:orderId", async (req, res) => {
     try {
       const orderId = parseInt(req.params.orderId);
+      const { db } = await import("./db");
+      const { eq } = await import("drizzle-orm");
+
       const order = await storage.getOrder(orderId);
 
       if (!order) {
         return res.status(404).json({ message: "Pedido não encontrado" });
       }
 
-      // Advance status based on current status
-      let newStatus = order.status;
-      const statusProgression = ["pending", "approved", "approved", "approved"];
+      // Advance by 1 day (max 9 days)
+      const currentDay = (order as any).trackingDay || 0;
+      const nextDay = Math.min(currentDay + 1, 9);
 
-      const currentIndex = statusProgression.indexOf(order.status);
-      if (currentIndex < statusProgression.length - 1) {
-        newStatus = statusProgression[currentIndex + 1];
-      }
+      // Update tracking day
+      await db!.update(orders).set({ trackingDay: nextDay }).where(eq(orders.id, orderId));
 
-      // Update order status
+      // Update order status based on day
+      let newStatus = "pending";
+      if (nextDay >= 1) newStatus = "approved"; // Embalado
+      if (nextDay >= 5) newStatus = "approved"; // Em alfândega
+      if (nextDay >= 9) newStatus = "approved"; // Entregue
+
       await storage.updateOrderStatus(orderId, newStatus);
 
-      console.log(`✅ Order ${orderId} status updated from ${order.status} to ${newStatus}`);
+      console.log(`✅ Order ${orderId} advanced to day ${nextDay}`);
       res.json({
         success: true,
-        message: `Status atualizado de ${order.status} para ${newStatus}`,
-        newStatus: newStatus,
+        message: `Avançado para dia ${nextDay}/9`,
+        currentDay: nextDay,
+        maxDays: 9,
       });
     } catch (error: any) {
       console.error("❌ Error advancing status:", error);

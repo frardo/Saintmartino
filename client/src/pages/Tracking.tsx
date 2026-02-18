@@ -63,36 +63,45 @@ export default function Tracking() {
       const response = await fetch(`/api/orders/${code}`);
       if (response.ok) {
         const order = await response.json();
+
+        // Mapear tracking events para o formato esperado
+        const statuses: TrackingStatus[] = [];
+        if (order.trackingEvents && Array.isArray(order.trackingEvents)) {
+          for (const event of order.trackingEvents) {
+            let status: "pending" | "processing" | "shipped" | "delivered" = "pending";
+            if (["embalado", "saiu_alemanha"].includes(event.status)) {
+              status = "processing";
+            } else if (["em_transito", "alfandega", "em_transito_br"].includes(event.status)) {
+              status = "shipped";
+            } else if (event.status === "entregue") {
+              status = "delivered";
+            }
+
+            statuses.push({
+              status,
+              date: new Date(order.createdAt).toLocaleDateString("pt-BR"),
+              description: `${event.location} - ${event.description}`,
+            });
+          }
+        }
+
         // Converter para o formato esperado
         const trackingOrder: OrderTracking = {
           orderId: order.id.toString(),
           customerName: order.customerName,
           productName: order.items?.[0]?.name || "Pedido",
           trackingCode: order.id.toString(),
-          currentStatus: order.status === "approved" ? "delivered" : order.status === "pending" ? "processing" : "shipped",
-          statuses: [
+          currentStatus: statuses.length > 0
+            ? statuses[statuses.length - 1].status
+            : (order.status === "approved" ? "delivered" : "pending"),
+          statuses: statuses.length > 0 ? statuses : [
             {
               status: "pending",
               date: new Date(order.createdAt).toLocaleDateString("pt-BR"),
               description: "Pedido recebido e confirmado",
             },
-            {
-              status: "processing",
-              date: new Date(order.createdAt).toLocaleDateString("pt-BR"),
-              description: "Pedido em processamento",
-            },
-            ...(order.status !== "pending" ? [{
-              status: "shipped" as const,
-              date: new Date(order.updatedAt).toLocaleDateString("pt-BR"),
-              description: "Pedido enviado",
-            }] : []),
-            ...(order.status === "approved" ? [{
-              status: "delivered" as const,
-              date: new Date().toLocaleDateString("pt-BR"),
-              description: "Entregue",
-            }] : []),
           ],
-          estimatedDelivery: "Confira por email",
+          estimatedDelivery: `Dia ${order.currentTrackingDay || 0} de ${order.maxTrackingDays || 9}`,
           items: order.items || [],
         };
         setOrderData(trackingOrder);

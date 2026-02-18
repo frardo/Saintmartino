@@ -98,8 +98,20 @@ export const orders = pgTable("orders", {
   customerCpf: text("customer_cpf"),
   shippingAddress: jsonb("shipping_address"), // { cep, street, number, complement, neighborhood, city, state }
   items: jsonb("items").notNull(), // Array de { productId, name, price, quantity }
+  trackingDay: integer("tracking_day").default(0), // Número de dias avançados para rastreamento
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Tracking events for realistic shipment simulation
+export const trackingEvents = pgTable("tracking_events", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").references(() => orders.id).notNull(),
+  day: integer("day").notNull(), // Dia do rastreamento (0-9)
+  status: text("status").notNull(), // pending, embalado, saiu_alemanha, em_transito, alfandega, em_transito_br, entregue
+  location: text("location").notNull(), // Localização atual
+  description: text("description").notNull(), // Descrição do evento
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // === BASE SCHEMAS ===
