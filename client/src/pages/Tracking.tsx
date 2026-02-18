@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useSearch } from "wouter";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Loader2, AlertCircle, CheckCircle2, Package, ChevronRight } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, Package, ChevronRight, Search } from "lucide-react";
 
 interface TrackingStatus {
   status: "pending" | "processing" | "shipped" | "delivered";
@@ -244,20 +244,23 @@ export default function Tracking() {
                 placeholder="Código de rastreamento (ex: MP123456)"
                 value={trackingCode}
                 onChange={(e) => setTrackingCode(e.target.value.toUpperCase())}
-                className="flex-1 px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="flex-1 px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               />
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-8 py-3 bg-foreground text-background rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-2"
+                className="px-6 py-3 bg-foreground text-background rounded-lg font-semibold hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-sm hover:shadow-md"
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
-                    Buscando...
+                    <span className="hidden sm:inline">Buscando...</span>
                   </>
                 ) : (
-                  "Rastrear"
+                  <>
+                    <Search className="h-5 w-5" />
+                    <span className="hidden sm:inline">Rastrear</span>
+                  </>
                 )}
               </button>
             </div>

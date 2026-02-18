@@ -2,7 +2,7 @@ import { useAuth, logout } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { User, LogOut, Heart, Settings } from "lucide-react";
+import { User, LogOut, Heart, Settings, Chrome } from "lucide-react";
 
 export function UserMenu() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -18,10 +18,17 @@ export function UserMenu() {
         asChild
         variant="outline"
         size="sm"
-        className="flex items-center gap-2"
+        className="flex items-center gap-2 hover:bg-primary/10 transition-colors"
       >
-        <a href="/auth/google" className="flex items-center gap-2">
-          <User className="h-4 w-4" />
+        <a
+          href="/auth/google"
+          className="flex items-center gap-2"
+          onClick={() => {
+            // Optional: Add console log for debugging
+            console.log("🔐 Initiating Google OAuth login...");
+          }}
+        >
+          <Chrome className="h-4 w-4" />
           <span>Entrar</span>
         </a>
       </Button>
