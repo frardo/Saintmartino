@@ -17,18 +17,18 @@ const __dirname = process.cwd();
 // In-memory store for test order tracking days (orderId -> trackingDay)
 const testOrderTrackingDays = new Map<number, number>();
 
-// Realistic 9-day tracking timeline
+// Realistic 9-day tracking timeline - 9 days to reach Brazil customs
 const trackingTimeline = [
   { day: 0, status: "pending", location: "Armazém - Alemanha", description: "Pedido confirmado e em processamento" },
   { day: 1, status: "embalado", location: "Armazém - Alemanha", description: "Pedido embalado e pronto para envio" },
   { day: 2, status: "saiu_alemanha", location: "Centro Postal - Frankfurt", description: "Saiu da Alemanha em direção ao Brasil" },
   { day: 3, status: "em_transito", location: "Em Trânsito Aéreo", description: "Em voo internacional para o Brasil" },
-  { day: 4, status: "em_transito", location: "Em Trânsito Aéreo", description: "Continuando voo para o Brasil" },
-  { day: 5, status: "alfandega", location: "Alfândega - Aeroporto Internacional", description: "Passando pela alfândega brasileira" },
-  { day: 6, status: "em_transito_br", location: "Distribuição - São Paulo", description: "Em distribuição no Brasil" },
-  { day: 7, status: "em_transito_br", location: "Distribuição Regional", description: "Saiu para entrega" },
-  { day: 8, status: "em_transito_br", location: "Centro de Distribuição Local", description: "Chegou ao centro local" },
-  { day: 9, status: "entregue", location: "Endereço do Cliente - São Paulo", description: "Entregue com sucesso" },
+  { day: 4, status: "em_transito", location: "Em Trânsito Aéreo", description: "Em voo sobre o Oceano Atlântico" },
+  { day: 5, status: "em_transito", location: "Em Trânsito Aéreo", description: "Continuando voo para o Brasil" },
+  { day: 6, status: "em_transito", location: "Em Trânsito Aéreo", description: "Aproximando-se do Brasil" },
+  { day: 7, status: "em_transito", location: "Em Trânsito Aéreo", description: "Última etapa do voo internacional" },
+  { day: 8, status: "em_transito", location: "Aeroporto Internacional - Brasil", description: "Pousou no Brasil, aguardando liberação" },
+  { day: 9, status: "fiscalizacao", location: "Alfândega - Aeroporto Internacional", description: "Em fiscalização alfandegária brasileira" },
 ];
 
 // Configure multer for file uploads - use process.cwd() for absolute path
