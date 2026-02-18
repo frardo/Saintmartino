@@ -238,12 +238,12 @@ export async function registerRoutes(
     res.json({ isAdmin: !!req.session?.isAdmin });
   });
 
-  // File upload endpoint
+  // File upload endpoint - using Cloudinary
   app.post("/api/upload", requireAdmin, (req, res) => {
     try {
       console.log("=== UPLOAD REQUEST RECEIVED ===");
 
-      upload.single("file")(req, res, (err) => {
+      upload.single("file")(req, res, async (err) => {
         try {
           if (err) {
             console.error("Multer error:", err);
@@ -255,18 +255,34 @@ export async function registerRoutes(
             return res.status(400).json({ message: "No file provided" });
           }
 
-          const fileUrl = `/images/${req.file.filename}`;
-          console.log("File uploaded successfully:", {
-            filename: req.file.filename,
-            originalname: req.file.originalname,
-            size: req.file.size,
-            path: req.file.path,
+          // Upload to Cloudinary
+          const { v2: cloudinary } = require("cloudinary");
+          cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET,
           });
 
-          // Send response using Express json() method
-          return res.status(201).json({ url: fileUrl });
+          const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+            folder: "saintmartino",
+            resource_type: "auto",
+          });
+
+          // Delete the temporary file
+          fs.unlinkSync(req.file.path);
+
+          console.log("File uploaded to Cloudinary successfully:", {
+            filename: req.file.originalname,
+            url: uploadResult.secure_url,
+          });
+
+          return res.status(201).json({ url: uploadResult.secure_url });
         } catch (innerErr) {
           console.error("Error in upload callback:", innerErr);
+          // Delete temp file on error
+          if (req.file?.path && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+          }
           return res.status(500).json({ message: "Internal server error during upload" });
         }
       });
