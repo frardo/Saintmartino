@@ -749,6 +749,83 @@ export async function registerRoutes(
     }
   });
 
+  // === TEST ENDPOINTS ===
+  // Create test order
+  app.post("/api/test/create-order", async (req, res) => {
+    try {
+      const testOrder = await storage.createOrder({
+        status: "pending",
+        total: "2890.00",
+        paymentMethod: "test",
+        paymentId: `TEST-${Date.now()}`,
+        customerName: "Cliente Teste",
+        customerEmail: "teste@saintmartino.com",
+        customerPhone: "+55 11 9999-9999",
+        customerCpf: "123.456.789-00",
+        shippingAddress: {
+          cep: "01310-100",
+          street: "Avenida Paulista",
+          number: "1000",
+          neighborhood: "Bela Vista",
+          city: "São Paulo",
+          state: "SP",
+        },
+        items: [
+          {
+            productId: 1,
+            name: "Elegância Clássica (Teste)",
+            price: "2890.00",
+            quantity: 1,
+          },
+        ],
+      });
+
+      console.log("✅ Test order created:", testOrder.id);
+      res.json({
+        success: true,
+        orderId: testOrder.id,
+        message: "Pedido de teste criado com sucesso!",
+      });
+    } catch (error: any) {
+      console.error("❌ Error creating test order:", error);
+      res.status(500).json({ message: "Erro ao criar pedido de teste" });
+    }
+  });
+
+  // Advance order status
+  app.post("/api/test/advance-status/:orderId", async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.orderId);
+      const order = await storage.getOrder(orderId);
+
+      if (!order) {
+        return res.status(404).json({ message: "Pedido não encontrado" });
+      }
+
+      // Advance status based on current status
+      let newStatus = order.status;
+      const statusProgression = ["pending", "approved", "approved", "approved"];
+
+      const currentIndex = statusProgression.indexOf(order.status);
+      if (currentIndex < statusProgression.length - 1) {
+        newStatus = statusProgression[currentIndex + 1];
+      }
+
+      // Update order status
+      await storage.updateOrderStatus(orderId, newStatus);
+
+      console.log(`✅ Order ${orderId} status updated from ${order.status} to ${newStatus}`);
+      res.json({
+        success: true,
+        message: `Status atualizado de ${order.status} para ${newStatus}`,
+        newStatus: newStatus,
+      });
+    } catch (error: any) {
+      console.error("❌ Error advancing status:", error);
+      res.status(500).json({ message: "Erro ao avançar status" });
+    }
+  });
+
   // Seed site settings and products
   await seedSiteSettings();
   await seedDatabase();

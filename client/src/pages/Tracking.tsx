@@ -35,6 +35,8 @@ export default function Tracking() {
   const [orderData, setOrderData] = useState<OrderTracking | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [isAdvancingStatus, setIsAdvancingStatus] = useState(false);
 
   // Auto-search se houver parâmetro de URL
   useEffect(() => {
@@ -201,6 +203,58 @@ export default function Tracking() {
     performSearch(trackingCode);
   };
 
+  const createTestOrder = async () => {
+    setIsCreatingOrder(true);
+    try {
+      const response = await fetch("/api/test/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const code = data.orderId.toString();
+        setTrackingCode(code);
+        await performSearch(code);
+        alert("✅ Pedido de teste criado! Código: " + code);
+      } else {
+        alert("❌ Erro ao criar pedido de teste");
+      }
+    } catch (err) {
+      alert("❌ Erro ao criar pedido de teste");
+      console.error(err);
+    } finally {
+      setIsCreatingOrder(false);
+    }
+  };
+
+  const advanceOrderStatus = async () => {
+    if (!orderData) {
+      alert("Primeiro, crie ou busque um pedido!");
+      return;
+    }
+
+    setIsAdvancingStatus(true);
+    try {
+      const response = await fetch(`/api/test/advance-status/${orderData.orderId}`, {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        // Buscar novamente para atualizar
+        await performSearch(orderData.orderId);
+        alert("✅ Status avançado!");
+      } else {
+        alert("❌ Erro ao avançar status");
+      }
+    } catch (err) {
+      alert("❌ Erro ao avançar status");
+      console.error(err);
+    } finally {
+      setIsAdvancingStatus(false);
+    }
+  };
+
   const getStatusLabel = (status: string) => {
     const labels: { [key: string]: string } = {
       pending: "Pendente",
@@ -237,7 +291,7 @@ export default function Tracking() {
           </div>
 
           {/* Search Form */}
-          <form onSubmit={handleSearch} className="mb-12">
+          <form onSubmit={handleSearch} className="mb-8">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -265,6 +319,45 @@ export default function Tracking() {
               </button>
             </div>
           </form>
+
+          {/* Test Buttons */}
+          <div className="mb-12 p-6 bg-secondary/30 rounded-lg border border-border">
+            <p className="text-sm font-semibold mb-4 text-muted-foreground">🧪 MODO TESTE - Simular Compra</p>
+            <div className="flex gap-3 flex-wrap">
+              <button
+                onClick={createTestOrder}
+                disabled={isCreatingOrder || isLoading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center gap-2"
+              >
+                {isCreatingOrder ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  "📦 Simular Compra"
+                )}
+              </button>
+              <button
+                onClick={advanceOrderStatus}
+                disabled={isAdvancingStatus || !orderData}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 transition-all flex items-center gap-2"
+              >
+                {isAdvancingStatus ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Avançando...
+                  </>
+                ) : (
+                  "📅 Avançar 1 Dia"
+                )}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-4">
+              1. Clique "Simular Compra" para criar um pedido de teste<br />
+              2. Clique "Avançar 1 Dia" várias vezes para ver a progressão do status
+            </p>
+          </div>
 
           {/* Error Message */}
           {error && (
