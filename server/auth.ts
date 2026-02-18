@@ -18,11 +18,13 @@ async function getStorage() {
   return storageInstance;
 }
 
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID!,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-  callbackURL: `${process.env.VITE_APP_URL}/auth/google/callback`,
-}, async (accessToken, refreshToken, profile, done) => {
+// Only initialize Google Strategy if credentials are provided
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: `${process.env.VITE_APP_URL}/auth/google/callback`,
+  }, async (accessToken, refreshToken, profile, done) => {
   try {
     console.log("🔐 Google Strategy Callback - Profile:", {
       id: profile.id,
@@ -63,7 +65,10 @@ passport.use(new GoogleStrategy({
     console.error("❌ Error in Google Strategy:", error);
     return done(error);
   }
-}));
+  }));
+} else {
+  console.warn("⚠️ Google OAuth credentials not found - OAuth will not be available");
+}
 
 passport.serializeUser((user: any, done) => {
   console.log("📝 Serializing user to session:", { userId: user.id });
