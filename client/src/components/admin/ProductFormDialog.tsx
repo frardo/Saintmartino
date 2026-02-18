@@ -73,10 +73,14 @@ export function ProductFormDialog({
       material: product.material,
       stone: product.stone ?? undefined,
       isNew: product.isNew,
+      rating: product.rating ? Number(product.rating) : 0,
+      totalSold: product.totalSold ?? 0,
       discountPercent: product.discountPercent,
       discountLabel: product.discountLabel ?? undefined,
     } : {
       isNew: false,
+      rating: 0,
+      totalSold: 0,
       discountPercent: 0,
     },
   });
@@ -190,6 +194,8 @@ export function ProductFormDialog({
         stone: formData.stone || undefined,
         imageUrls: allImageUrls.length > 0 ? allImageUrls : undefined,
         isNew: formData.isNew ?? false,
+        rating: formData.rating ?? 0,
+        totalSold: formData.totalSold ?? 0,
         discountPercent: formData.discountPercent ?? 0,
         discountLabel: formData.discountLabel || undefined,
       };
@@ -291,20 +297,9 @@ export function ProductFormDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Material</FormLabel>
-                    <Select value={field.value || ""} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o material" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Ouro">Ouro</SelectItem>
-                        <SelectItem value="Prata">Prata</SelectItem>
-                        <SelectItem value="Ouro Rose">Ouro Rose</SelectItem>
-                        <SelectItem value="Aço Inoxidável">Aço Inoxidável</SelectItem>
-                        <SelectItem value="Titânio">Titânio</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input placeholder="Ex: Ouro 14k, Prata 925, Titânio..." {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -433,6 +428,48 @@ export function ProductFormDialog({
                     <FormLabel>Etiqueta de Desconto</FormLabel>
                     <FormControl>
                       <Input placeholder="Ex: PROMOÇÃO" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="rating"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Avaliação (0-5 ⭐)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="5"
+                        placeholder="4.5"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="totalSold"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Total Vendido</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
