@@ -84,6 +84,8 @@ export default function Admin() {
   const [heroImages, setHeroImages] = useState<string[]>([]);
   const [positioningImage, setPositioningImage] = useState<{ url: string; index: number } | null>(null);
   const [imagePositions, setImagePositions] = useState<Record<number, { x: number; y: number; scale: number }>>({});
+  const [selectedProducts, setSelectedProducts] = useState<Set<number>>(new Set());
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
@@ -104,6 +106,39 @@ export default function Admin() {
   const openEditDialog = (product: Product) => {
     setEditingProduct(product);
     setFormOpen(true);
+  };
+
+  const toggleProductSelection = (productId: number) => {
+    const newSelected = new Set(selectedProducts);
+    if (newSelected.has(productId)) {
+      newSelected.delete(productId);
+    } else {
+      newSelected.add(productId);
+    }
+    setSelectedProducts(newSelected);
+  };
+
+  const selectAllProducts = () => {
+    if (products && products.length > 0) {
+      const allIds = new Set(products.map(p => p.id));
+      if (selectedProducts.size === products.length) {
+        setSelectedProducts(new Set());
+      } else {
+        setSelectedProducts(allIds);
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    for (const productId of selectedProducts) {
+      await deleteProduct.mutateAsync(productId);
+    }
+    setSelectedProducts(new Set());
+    setBulkDeleteConfirm(false);
+    toast({
+      title: "Produtos deletados",
+      description: `${selectedProducts.size} produtos foram removidos com sucesso.`,
+    });
   };
 
   const openCreateBannerDialog = () => {
@@ -502,9 +537,29 @@ export default function Admin() {
               </div>
             ) : (
               <div className="border rounded-lg overflow-hidden">
+                {selectedProducts.size > 0 && (
+                  <div className="bg-blue-50 border-b p-4 flex items-center justify-between">
+                    <span className="font-medium">{selectedProducts.size} produto(s) selecionado(s)</span>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setBulkDeleteConfirm(true)}
+                    >
+                      Deletar Selecionados
+                    </Button>
+                  </div>
+                )}
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <input
+                          type="checkbox"
+                          checked={products && products.length > 0 && selectedProducts.size === products.length}
+                          onChange={selectAllProducts}
+                          className="cursor-pointer"
+                        />
+                      </TableHead>
                       <TableHead>Imagem</TableHead>
                       <TableHead>Nome</TableHead>
                       <TableHead>Preço</TableHead>
@@ -517,7 +572,15 @@ export default function Admin() {
                   </TableHeader>
                   <TableBody>
                     {products.map((product) => (
-                      <TableRow key={product.id}>
+                      <TableRow key={product.id} className={selectedProducts.has(product.id) ? "bg-blue-50" : ""}>
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            checked={selectedProducts.has(product.id)}
+                            onChange={() => toggleProductSelection(product.id)}
+                            className="cursor-pointer"
+                          />
+                        </TableCell>
                         <TableCell>
                           <img
                             src={product.imageUrls?.[0] || ""}
@@ -852,6 +915,27 @@ export default function Admin() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Deletar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deletar {selectedProducts.size} Produtos</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja deletar {selectedProducts.size} produto(s) selecionado(s)? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Deletar Todos
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
