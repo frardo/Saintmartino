@@ -48,14 +48,12 @@ export function Footer() {
       </div>
 
       {/* Admin Button - Fixed to footer */}
-      {import.meta.env.DEV && (
-        <Link href="/admin">
-          <button className="absolute bottom-4 right-4 z-50 bg-gray-800 text-gray-400 px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg hover:bg-gray-700 hover:text-white transition-colors flex items-center gap-1 opacity-30 hover:opacity-100">
-            <Settings className="h-3 w-3" />
-            A
-          </button>
-        </Link>
-      )}
+      <Link href="/admin">
+        <button className="absolute bottom-4 right-4 z-50 bg-gray-800 text-gray-400 px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg hover:bg-gray-700 hover:text-white transition-colors flex items-center gap-1 opacity-30 hover:opacity-100">
+          <Settings className="h-3 w-3" />
+          A
+        </button>
+      </Link>
     </footer>
   );
 }
