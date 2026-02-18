@@ -29,9 +29,10 @@ import {
   type InsertFavorite,
   type ProductsQueryParams
 } from "@shared/schema";
-import { eq, and, asc, desc } from "drizzle-orm";
+import { eq, and, asc, desc, isNull } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
+import { generateTrackingCode, getTrackingStatus } from "./tracking";
 
 // Helper functions for imageUrls JSON conversion
 function convertProductRow(row: ProductRow): Product {
@@ -181,6 +182,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrders(): Promise<Order[]> {
+    // Auto-generate tracking codes for orders that are 2+ days old
+    await this.updateTrackingCodes();
     return await db!.select().from(orders);
   }
 
@@ -190,7 +193,74 @@ export class DatabaseStorage implements IStorage {
       .from(orders)
       .where(eq(orders.customerEmail, email))
       .orderBy(desc(orders.createdAt));
+
+    // Auto-generate tracking codes for orders that are 2+ days old
+    await this.updateTrackingCodes();
+
     return customerOrders;
+  }
+
+  async updateTrackingCodes(): Promise<void> {
+    try {
+      // Busca pedidos pagos que ainda não têm código de rastreamento
+      const paidOrders = await db!
+        .select()
+        .from(orders)
+        .where(and(
+          eq(orders.status, "approved"),
+          isNull(orders.trackingCode)
+        ));
+
+      const now = new Date();
+
+      for (const order of paidOrders) {
+        if (!order.createdAt) continue;
+
+        const orderDate = new Date(order.createdAt);
+        const daysPassed = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        // Se passou 2 dias, gera o código de rastreamento
+        if (daysPassed >= 2 && !order.trackingCode) {
+          const trackingCode = generateTrackingCode();
+          const shippedAt = new Date(orderDate);
+          shippedAt.setDate(shippedAt.getDate() + 2);
+
+          await db!.update(orders)
+            .set({
+              trackingCode,
+              trackingStatus: "embalado",
+              shippedAt,
+            })
+            .where(eq(orders.id, order.id));
+
+          console.log(`✅ Tracking code generated for order #${order.id}: ${trackingCode}`);
+        }
+      }
+
+      // Atualiza status de rastreamento para pedidos que já têm código
+      const trackedOrders = await db!
+        .select()
+        .from(orders)
+        .where(and(
+          eq(orders.status, "approved"),
+          isNull(orders.trackingCode) === false
+        ));
+
+      for (const order of trackedOrders) {
+        if (!order.shippedAt || !order.trackingCode) continue;
+
+        const newStatus = getTrackingStatus(order.shippedAt);
+        if (newStatus !== order.trackingStatus) {
+          await db!.update(orders)
+            .set({ trackingStatus: newStatus })
+            .where(eq(orders.id, order.id));
+
+          console.log(`📍 Order #${order.id} status updated to: ${newStatus}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating tracking codes:", error);
+    }
   }
 
   async getUserByGoogleId(googleId: string): Promise<User | undefined> {
@@ -607,9 +677,59 @@ export class MemoryStorage implements IStorage {
   }
 
   async getOrdersByEmail(email: string): Promise<Order[]> {
+    // Auto-generate tracking codes for orders that are 2+ days old
+    await this.updateTrackingCodes();
+
     return this.ordersList
       .filter(o => o.customerEmail === email)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async updateTrackingCodes(): Promise<void> {
+    try {
+      const now = new Date();
+
+      for (let i = 0; i < this.ordersList.length; i++) {
+        const order = this.ordersList[i];
+
+        if (order.status !== "approved" || !order.createdAt) continue;
+
+        const orderDate = new Date(order.createdAt);
+        const daysPassed = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        // Se passou 2 dias, gera o código de rastreamento
+        if (daysPassed >= 2 && !order.trackingCode) {
+          const trackingCode = generateTrackingCode();
+          const shippedAt = new Date(orderDate);
+          shippedAt.setDate(shippedAt.getDate() + 2);
+
+          this.ordersList[i] = {
+            ...order,
+            trackingCode,
+            trackingStatus: "embalado",
+            shippedAt,
+          };
+
+          console.log(`✅ Tracking code generated for order #${order.id}: ${trackingCode}`);
+        }
+
+        // Atualiza status de rastreamento
+        if (order.trackingCode && order.shippedAt) {
+          const newStatus = getTrackingStatus(order.shippedAt);
+          if (newStatus !== order.trackingStatus) {
+            this.ordersList[i] = {
+              ...order,
+              trackingStatus: newStatus,
+            };
+            console.log(`📍 Order #${order.id} status updated to: ${newStatus}`);
+          }
+        }
+      }
+
+      this.saveOrders();
+    } catch (error) {
+      console.error("Error updating tracking codes:", error);
+    }
   }
 
   private usersList: User[] = [];
