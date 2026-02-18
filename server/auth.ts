@@ -20,10 +20,16 @@ async function getStorage() {
 
 // Only initialize Google Strategy if credentials are provided
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  // Determine callback URL based on environment
+  const appUrl = process.env.APP_URL || process.env.VITE_APP_URL || `http://localhost:${process.env.PORT || 9000}`;
+  const callbackURL = `${appUrl}/auth/google/callback`;
+
+  console.log("🔐 Google OAuth Callback URL:", callbackURL);
+
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: `${process.env.VITE_APP_URL}/auth/google/callback`,
+    callbackURL: callbackURL,
   }, async (accessToken, refreshToken, profile, done) => {
   try {
     console.log("🔐 Google Strategy Callback - Profile:", {
