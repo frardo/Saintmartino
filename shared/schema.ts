@@ -98,8 +98,6 @@ export const orders = pgTable("orders", {
   customerCpf: text("customer_cpf"),
   shippingAddress: jsonb("shipping_address"), // { cep, street, number, complement, neighborhood, city, state }
   items: jsonb("items").notNull(), // Array de { productId, name, price, quantity }
-  trackingCode: text("tracking_code"), // NNNNNNNLBR (7 números + 1 letra + BR)
-  trackingStatus: text("tracking_status").default("pending"), // pending, embalado, em_transito, fiscalizacao, entregue
   shippedAt: timestamp("shipped_at"), // Data de envio (2 dias após payment)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
