@@ -255,32 +255,32 @@ export default function Tracking() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-12 md:py-20">
+      <main className="container mx-auto px-3 sm:px-4 py-8 md:py-20">
         <div className="max-w-2xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="font-serif text-4xl md:text-5xl mb-4 text-foreground">
+          <div className="text-center mb-8 md:mb-12">
+            <h1 className="font-serif text-2xl sm:text-4xl md:text-5xl mb-3 text-foreground">
               Rastrear Pedido
             </h1>
-            <p className="text-muted-foreground">
-              Digite seu código de rastreamento para acompanhar seu pedido em tempo real
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Digite seu código de rastreamento para acompanhar seu pedido
             </p>
           </div>
 
           {/* Search Form */}
-          <form onSubmit={handleSearch} className="mb-8">
-            <div className="flex gap-2">
+          <form onSubmit={handleSearch} className="mb-6 md:mb-8">
+            <div className="flex gap-2 flex-col sm:flex-row">
               <input
                 type="text"
-                placeholder="Código de rastreamento (ex: MP123456)"
+                placeholder="Código (ex: 1)"
                 value={trackingCode}
                 onChange={(e) => setTrackingCode(e.target.value.toUpperCase())}
-                className="flex-1 px-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                className="flex-1 px-3 sm:px-4 py-3 text-sm sm:text-base border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               />
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-6 py-3 bg-foreground text-background rounded-lg font-semibold hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-sm hover:shadow-md"
+                className="px-4 sm:px-6 py-3 bg-foreground text-background rounded-lg font-semibold hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md text-sm sm:text-base w-full sm:w-auto"
               >
                 {isLoading ? (
                   <>
@@ -308,52 +308,44 @@ export default function Tracking() {
 
           {/* Order Tracking Info */}
           {orderData && (
-            <div className="space-y-8">
+            <div className="space-y-6 md:space-y-8">
               {/* Order Details */}
-              <div className="border border-border rounded-lg p-6 space-y-4">
-                <h2 className="font-serif text-2xl font-semibold mb-6">
+              <div className="border border-border rounded-lg p-4 md:p-6 space-y-3 md:space-y-4">
+                <h2 className="font-serif text-xl md:text-2xl font-semibold">
                   Informações do Pedido
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 text-sm md:text-base">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Código de Rastreamento</p>
+                    <p className="text-xs text-muted-foreground mb-1">Código</p>
                     <p className="font-semibold">{orderData.trackingCode}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">ID do Pedido</p>
-                    <p className="font-semibold">{orderData.orderId}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Nome do Cliente</p>
-                    <p className="font-semibold">{orderData.customerName}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Produto</p>
-                    <p className="font-semibold">{orderData.productName}</p>
+                    <p className="text-xs text-muted-foreground mb-1">Cliente</p>
+                    <p className="font-semibold text-sm md:text-base">{orderData.customerName}</p>
                   </div>
                 </div>
               </div>
 
               {/* Produtos do Pedido */}
-              <div className="border border-border rounded-lg p-6">
-                <h2 className="font-serif text-2xl font-semibold mb-6">Produtos do Pedido</h2>
-                <div className="space-y-4">
+              <div className="border border-border rounded-lg p-4 md:p-6">
+                <h2 className="font-serif text-xl md:text-2xl font-semibold mb-4 md:mb-6">Produtos</h2>
+                <div className="space-y-3 md:space-y-4">
                   {orderData.items.map((item, index) => (
                     <Link key={index} href={`/product/${item.productId}`}>
-                      <div className="flex gap-4 items-center p-4 border border-border rounded-lg hover:bg-secondary/50 cursor-pointer transition-colors">
+                      <div className="flex gap-3 items-start p-3 md:p-4 border border-border rounded-lg hover:bg-secondary/50 cursor-pointer transition-colors">
                         <img
                           src={item.imageUrl}
                           alt={item.name}
-                          className="w-20 h-24 object-cover rounded-lg flex-shrink-0"
+                          className="w-16 h-20 md:w-20 md:h-24 object-cover rounded flex-shrink-0"
                         />
-                        <div className="flex-1">
-                          <p className="font-serif text-lg font-medium hover:underline">{item.name}</p>
-                          <p className="text-sm text-muted-foreground mt-1">Quantidade: {item.quantity}</p>
-                          <p className="font-semibold text-lg mt-1">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-serif text-sm md:text-lg font-medium hover:underline line-clamp-2">{item.name}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground mt-1">Qtd: {item.quantity}</p>
+                          <p className="font-semibold text-sm md:text-lg mt-1">
                             R$ {(Number(item.price) * item.quantity).toFixed(2)}
                           </p>
                         </div>
-                        <ChevronRight className="text-muted-foreground h-5 w-5 flex-shrink-0" />
+                        <ChevronRight className="text-muted-foreground h-4 w-4 md:h-5 md:w-5 flex-shrink-0 mt-1" />
                       </div>
                     </Link>
                   ))}
@@ -361,35 +353,35 @@ export default function Tracking() {
               </div>
 
               {/* Current Status */}
-              <div className="border border-border rounded-lg p-6 bg-secondary/50">
-                <div className="flex items-start gap-4">
+              <div className="border border-border rounded-lg p-4 md:p-6 bg-secondary/50">
+                <div className="flex items-start gap-3 md:gap-4">
                   {orderData.currentStatus === "delivered" ? (
-                    <CheckCircle2 className="h-8 w-8 text-green-600 flex-shrink-0 mt-1" />
+                    <CheckCircle2 className="h-6 md:h-8 w-6 md:w-8 text-green-600 flex-shrink-0 mt-0.5" />
                   ) : (
-                    <Package className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
+                    <Package className="h-6 md:h-8 w-6 md:w-8 text-primary flex-shrink-0 mt-0.5" />
                   )}
                   <div>
-                    <h3 className="font-semibold text-lg mb-1">
-                      Status Atual: {getStatusLabel(orderData.currentStatus)}
+                    <h3 className="font-semibold text-base md:text-lg">
+                      {getStatusLabel(orderData.currentStatus)}
                     </h3>
-                    <p className="text-muted-foreground text-sm">
-                      Entrega estimada: {orderData.estimatedDelivery}
+                    <p className="text-muted-foreground text-xs md:text-sm mt-1">
+                      {orderData.estimatedDelivery}
                     </p>
                   </div>
                 </div>
               </div>
 
               {/* Timeline */}
-              <div className="border border-border rounded-lg p-6">
-                <h3 className="font-serif text-xl font-semibold mb-6">Histórico de Rastreamento</h3>
-                <div className="space-y-6">
+              <div className="border border-border rounded-lg p-4 md:p-6">
+                <h3 className="font-serif text-lg md:text-xl font-semibold mb-4 md:mb-6">Histórico</h3>
+                <div className="space-y-4 md:space-y-6">
                   {orderData.statuses.map((status, index) => (
                     <div key={index} className="relative">
-                      <div className="flex gap-4">
+                      <div className="flex gap-3 md:gap-4">
                         {/* Timeline Dot */}
-                        <div className="flex flex-col items-center">
+                        <div className="flex flex-col items-center flex-shrink-0">
                           <div
-                            className={`w-4 h-4 rounded-full border-2 ${
+                            className={`w-3 h-3 md:w-4 md:h-4 rounded-full border-2 ${
                               orderData.statuses
                                 .slice(0, index + 1)
                                 .some((s) => s.status === status.status)
@@ -398,23 +390,23 @@ export default function Tracking() {
                             }`}
                           />
                           {index < orderData.statuses.length - 1 && (
-                            <div className="w-0.5 h-16 bg-gray-300 my-2" />
+                            <div className="w-0.5 h-12 md:h-16 bg-gray-300 my-1 md:my-2" />
                           )}
                         </div>
 
                         {/* Status Content */}
-                        <div className="pb-4">
-                          <div className="flex items-center gap-2 mb-2">
+                        <div className="pb-2 md:pb-4 min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-1 md:mb-2">
                             <span
-                              className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                              className={`px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs font-semibold ${getStatusColor(
                                 status.status
                               )}`}
                             >
                               {getStatusLabel(status.status)}
                             </span>
                           </div>
-                          <p className="font-medium text-foreground">{status.description}</p>
-                          <p className="text-sm text-muted-foreground mt-1">{status.date}</p>
+                          <p className="font-medium text-foreground text-sm md:text-base line-clamp-2">{status.description}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground mt-0.5 md:mt-1">{status.date}</p>
                         </div>
                       </div>
                     </div>
