@@ -161,12 +161,19 @@ export default function ProductDetail() {
               </span>
             </div>
 
-            {/* Star Rating */}
-            {product.rating && parseFloat(product.rating as string) > 0 && (
-              <div className="mb-4">
-                <StarRating rating={product.rating} size="md" showValue />
-              </div>
-            )}
+            {/* Star Rating and Sales */}
+            <div className="mb-6 space-y-2">
+              {product.rating && parseFloat(product.rating as string) > 0 && (
+                <div>
+                  <StarRating rating={product.rating} size="md" showValue />
+                </div>
+              )}
+              {product.totalSold && product.totalSold > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  ✅ <span className="font-medium">{product.totalSold}</span> pessoa{product.totalSold !== 1 ? "s" : ""} compraram
+                </p>
+              )}
+            </div>
 
             <h1 className="font-serif text-3xl md:text-5xl mb-4 text-foreground">
               {product.name}
