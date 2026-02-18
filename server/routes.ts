@@ -762,22 +762,22 @@ export async function registerRoutes(
         customerEmail: "teste@saintmartino.com",
         customerPhone: "+55 11 9999-9999",
         customerCpf: "123.456.789-00",
-        shippingAddress: {
+        shippingAddress: JSON.stringify({
           cep: "01310-100",
           street: "Avenida Paulista",
           number: "1000",
           neighborhood: "Bela Vista",
           city: "São Paulo",
           state: "SP",
-        },
-        items: [
+        }),
+        items: JSON.stringify([
           {
             productId: 1,
             name: "Elegância Clássica (Teste)",
             price: "2890.00",
             quantity: 1,
           },
-        ],
+        ]),
       });
 
       console.log("✅ Test order created:", testOrder.id);
