@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { useCart } from "@/hooks/use-cart";
 import { ShoppingCartIcon, SearchIcon, MenuIcon, TrackingIcon } from "./Icons";
+import { UserMenu } from "./UserMenu";
 
 export function Header() {
   const { items } = useCart();
@@ -37,6 +38,7 @@ export function Header() {
             <TrackingIcon size="md" />
             <span className="hidden md:inline">Rastrear</span>
           </Link>
+          <UserMenu />
           <Link href="/cart" className="p-2 hover:opacity-80 rounded-full transition-opacity relative block">
             <ShoppingCartIcon size="md" />
             {cartItemCount > 0 && (

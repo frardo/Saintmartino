@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { Product } from '@shared/schema';
 
 export interface CartItem {
@@ -20,8 +21,10 @@ interface CartStore {
   getSelectedItems: () => CartItem[];
 }
 
-export const useCart = create<CartStore>((set, get) => ({
-  items: [],
+export const useCart = create<CartStore>(
+  persist(
+    (set, get) => ({
+      items: [],
 
   addItem: (product, quantity) => {
     set((state) => {
@@ -93,7 +96,15 @@ export const useCart = create<CartStore>((set, get) => ({
       }, 0);
   },
 
-  getSelectedItems: () => {
-    return get().items.filter(item => item.selected);
-  },
-}));
+      getSelectedItems: () => {
+        return get().items.filter(item => item.selected);
+      },
+    }),
+    {
+      name: 'cart-storage',
+      partialize: (state) => ({
+        items: state.items,
+      }),
+    }
+  )
+);

@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import { passport } from "./auth";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -35,6 +36,10 @@ app.use(session({
   saveUninitialized: false,
   cookie: { secure: false, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 }
 }));
+
+// Initialize Passport for OAuth authentication (MUST come after session)
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Serve static files from public directory (including PDFs)
 app.use(express.static(path.join(__dirname, "../public")));

@@ -2,6 +2,7 @@ import { useRoute, useLocation } from "wouter";
 import { useProduct, useProducts } from "@/hooks/use-products";
 import { useCart } from "@/hooks/use-cart";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { Loader2, Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -353,6 +354,7 @@ export default function ProductDetail() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

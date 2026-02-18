@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { Link } from "wouter";
+import { useState, useEffect } from "react";
+import { Link, useSearch } from "wouter";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { Loader2, AlertCircle, CheckCircle2, Package, ChevronRight } from "lucide-react";
 
 interface TrackingStatus {
@@ -29,14 +30,24 @@ interface OrderTracking {
 }
 
 export default function Tracking() {
+  const search = useSearch();
   const [trackingCode, setTrackingCode] = useState("");
   const [orderData, setOrderData] = useState<OrderTracking | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!trackingCode.trim()) {
+  // Auto-search se houver parâmetro de URL
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const code = params.get("code");
+    if (code) {
+      setTrackingCode(code);
+      performSearch(code);
+    }
+  }, [search]);
+
+  const performSearch = async (code: string) => {
+    if (!code.trim()) {
       setError("Por favor, insira um código de rastreamento");
       return;
     }
@@ -46,103 +57,148 @@ export default function Tracking() {
     setOrderData(null);
 
     try {
-      // Simular busca de dados (em produção seria uma API real)
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Dados de exemplo
-      const mockData: { [key: string]: OrderTracking } = {
-        "MP123456": {
-          orderId: "MP123456",
-          customerName: "João Silva",
-          productName: "Relógio Suíço Automático",
-          trackingCode: "MP123456",
-          currentStatus: "shipped",
+      // Tentar buscar pedido real da API
+      const response = await fetch(`/api/orders/${code}`);
+      if (response.ok) {
+        const order = await response.json();
+        // Converter para o formato esperado
+        const trackingOrder: OrderTracking = {
+          orderId: order.id.toString(),
+          customerName: order.customerName,
+          productName: order.items?.[0]?.name || "Pedido",
+          trackingCode: order.id.toString(),
+          currentStatus: order.status === "approved" ? "delivered" : order.status === "pending" ? "processing" : "shipped",
           statuses: [
             {
               status: "pending",
-              date: "2024-02-10",
+              date: new Date(order.createdAt).toLocaleDateString("pt-BR"),
               description: "Pedido recebido e confirmado",
             },
             {
               status: "processing",
-              date: "2024-02-11",
+              date: new Date(order.createdAt).toLocaleDateString("pt-BR"),
               description: "Pedido em processamento",
             },
-            {
-              status: "shipped",
-              date: "2024-02-13",
-              description: "Pedido enviado via sedex",
-            },
-            {
-              status: "delivered",
-              date: "2024-02-17",
-              description: "Entrega agendada",
-            },
+            ...(order.status !== "pending" ? [{
+              status: "shipped" as const,
+              date: new Date(order.updatedAt).toLocaleDateString("pt-BR"),
+              description: "Pedido enviado",
+            }] : []),
+            ...(order.status === "approved" ? [{
+              status: "delivered" as const,
+              date: new Date().toLocaleDateString("pt-BR"),
+              description: "Entregue",
+            }] : []),
           ],
-          estimatedDelivery: "17 de Fevereiro de 2024",
-          items: [
-            {
-              productId: 1,
-              name: "Elegância Clássica",
-              price: "2890.00",
-              quantity: 1,
-              imageUrl: "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=800&auto=format&fit=crop",
-            },
-          ],
-        },
-        "MP789012": {
-          orderId: "MP789012",
-          customerName: "Maria Santos",
-          productName: "Pulseira de Couro Premium",
-          trackingCode: "MP789012",
-          currentStatus: "delivered",
-          statuses: [
-            {
-              status: "pending",
-              date: "2024-02-05",
-              description: "Pedido recebido e confirmado",
-            },
-            {
-              status: "processing",
-              date: "2024-02-06",
-              description: "Pedido em processamento",
-            },
-            {
-              status: "shipped",
-              date: "2024-02-08",
-              description: "Pedido enviado via sedex",
-            },
-            {
-              status: "delivered",
-              date: "2024-02-12",
-              description: "Entregue com sucesso",
-            },
-          ],
-          estimatedDelivery: "2024-02-12",
-          items: [
-            {
-              productId: 2,
-              name: "Prata Minimalista",
-              price: "890.00",
-              quantity: 2,
-              imageUrl: "https://images.unsplash.com/photo-1517836357463-d25ddfcbf042?q=80&w=800&auto=format&fit=crop",
-            },
-          ],
-        },
-      };
-
-      const data = mockData[trackingCode.toUpperCase()];
-
-      if (data) {
-        setOrderData(data);
-      } else {
-        setError("Código de rastreamento não encontrado. Verifique se está correto.");
+          estimatedDelivery: "Confira por email",
+          items: order.items || [],
+        };
+        setOrderData(trackingOrder);
+        setIsLoading(false);
+        return;
       }
     } catch (err) {
-      setError("Erro ao buscar informações de rastreamento. Tente novamente.");
-    } finally {
-      setIsLoading(false);
+      console.log("Pedido real não encontrado, usando dados de exemplo");
     }
+
+    // Fallback para dados mock
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    const mockData: { [key: string]: OrderTracking } = {
+      "MP123456": {
+        orderId: "MP123456",
+        customerName: "João Silva",
+        productName: "Relógio Suíço Automático",
+        trackingCode: "MP123456",
+        currentStatus: "shipped",
+        statuses: [
+          {
+            status: "pending",
+            date: "2024-02-10",
+            description: "Pedido recebido e confirmado",
+          },
+          {
+            status: "processing",
+            date: "2024-02-11",
+            description: "Pedido em processamento",
+          },
+          {
+            status: "shipped",
+            date: "2024-02-13",
+            description: "Pedido enviado via sedex",
+          },
+          {
+            status: "delivered",
+            date: "2024-02-17",
+            description: "Entrega agendada",
+          },
+        ],
+        estimatedDelivery: "17 de Fevereiro de 2024",
+        items: [
+          {
+            productId: 1,
+            name: "Elegância Clássica",
+            price: "2890.00",
+            quantity: 1,
+            imageUrl: "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=800&auto=format&fit=crop",
+          },
+        ],
+      },
+      "MP789012": {
+        orderId: "MP789012",
+        customerName: "Maria Santos",
+        productName: "Pulseira de Couro Premium",
+        trackingCode: "MP789012",
+        currentStatus: "delivered",
+        statuses: [
+          {
+            status: "pending",
+            date: "2024-02-05",
+            description: "Pedido recebido e confirmado",
+          },
+          {
+            status: "processing",
+            date: "2024-02-06",
+            description: "Pedido em processamento",
+          },
+          {
+            status: "shipped",
+            date: "2024-02-08",
+            description: "Pedido enviado via sedex",
+          },
+          {
+            status: "delivered",
+            date: "2024-02-12",
+            description: "Entregue com sucesso",
+          },
+        ],
+        estimatedDelivery: "2024-02-12",
+        items: [
+          {
+            productId: 2,
+            name: "Prata Minimalista",
+            price: "890.00",
+            quantity: 2,
+            imageUrl: "https://images.unsplash.com/photo-1517836357463-d25ddfcbf042?q=80&w=800&auto=format&fit=crop",
+          },
+        ],
+      },
+    };
+
+    const data = mockData[code.toUpperCase()];
+
+    if (data) {
+      setOrderData(data);
+    } else {
+      setError("Código de rastreamento não encontrado. Verifique se está correto.");
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    performSearch(trackingCode);
   };
 
   const getStatusLabel = (status: string) => {
@@ -373,6 +429,7 @@ export default function Tracking() {
           )}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

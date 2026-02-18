@@ -419,42 +419,39 @@ export default function Admin() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <Header />
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md mx-4">
-            <CardHeader>
-              <CardTitle className="font-serif text-2xl">Painel Admin</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Senha de Acesso</label>
-                  <Input
-                    type="password"
-                    placeholder="Digite sua senha"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoggingIn}
-                    className="mt-1"
-                  />
+        <Card className="w-full max-w-md mx-4">
+          <CardHeader>
+            <CardTitle className="font-serif text-2xl">Painel Admin</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Senha de Acesso</label>
+                <Input
+                  type="password"
+                  placeholder="Digite sua senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoggingIn}
+                  className="mt-1"
+                />
+              </div>
+              {loginError && (
+                <div className="p-3 bg-destructive/10 border border-destructive/30 rounded text-sm text-destructive">
+                  {loginError}
                 </div>
-                {loginError && (
-                  <div className="p-3 bg-destructive/10 border border-destructive/30 rounded text-sm text-destructive">
-                    {loginError}
-                  </div>
-                )}
-                <Button type="submit" className="w-full" disabled={isLoggingIn}>
-                  {isLoggingIn ? "Entrando..." : "Entrar"}
-                </Button>
-              </form>
-              <p className="text-xs text-muted-foreground mt-4 text-center">
-                <Link href="/" className="text-primary hover:underline">
-                  ← Voltar para Loja
-                </Link>
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+              )}
+              <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                {isLoggingIn ? "Entrando..." : "Entrar"}
+              </Button>
+            </form>
+            <p className="text-xs text-muted-foreground mt-4 text-center">
+              <Link href="/" className="text-primary hover:underline">
+                ← Voltar para Loja
+              </Link>
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }

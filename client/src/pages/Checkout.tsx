@@ -391,7 +391,14 @@ export default function Checkout() {
             <AlertCircleIcon size="xl" className="mx-auto mb-4 text-destructive" />
             <h1 className="text-2xl font-serif mb-4">Carrinho Vazio</h1>
             <p className="text-muted-foreground mb-6">Você não tem produtos selecionados para comprar.</p>
-            <Button onClick={() => setLocation("/")}>Voltar para Loja</Button>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => setLocation("/cart")} variant="outline">
+                ← Voltar para Sacola
+              </Button>
+              <Button onClick={() => setLocation("/")}>
+                Continuar Comprando →
+              </Button>
+            </div>
           </div>
         </main>
       </div>
@@ -504,13 +511,22 @@ export default function Checkout() {
                     </div>
                   </div>
 
-                  <Button
-                    onClick={() => setStep(2)}
-                    disabled={!customerData.name || !customerData.email || !customerData.phone || !customerData.cpf}
-                    className="w-full py-3 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                  >
-                    Continuar para Endereço →
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => setLocation("/cart")}
+                      variant="outline"
+                      className="flex-1 py-3 text-sm font-semibold"
+                    >
+                      ← Voltar para Sacola
+                    </Button>
+                    <Button
+                      onClick={() => setStep(2)}
+                      disabled={!customerData.name || !customerData.email || !customerData.phone || !customerData.cpf}
+                      className="flex-1 py-3 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    >
+                      Continuar para Endereço →
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -1041,9 +1057,27 @@ export default function Checkout() {
                     </div>
                   </div>
 
-                  <Button onClick={() => setLocation("/")} className="w-full mt-8">
-                    Voltar para Loja
-                  </Button>
+                  {/* Rastreamento */}
+                  <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                    <p className="text-sm text-blue-800 mb-3">
+                      <strong>🔍 Rastrear Pedido:</strong> Use o número do pedido para acompanhar sua entrega
+                    </p>
+                    <Button
+                      onClick={() => setLocation(`/tracking?code=${orderId}`)}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Rastrear Pedido #{orderId} →
+                    </Button>
+                  </div>
+
+                  <div className="flex gap-3 mt-8">
+                    <Button onClick={() => setLocation("/cart")} variant="outline" className="flex-1">
+                      ← Voltar para Sacola
+                    </Button>
+                    <Button onClick={() => setLocation("/")} className="flex-1">
+                      Continuar Comprando →
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

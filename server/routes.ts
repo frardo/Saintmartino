@@ -8,6 +8,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import https from "https";
+import { passport } from "./auth";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,11 +44,11 @@ const storage_multer = multer.diskStorage({
 const upload = multer({
   storage: storage_multer,
   fileFilter: (req, file, cb) => {
-    const allowedMimes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-    if (allowedMimes.includes(file.mimetype)) {
+    // Accept any image type (wildcard)
+    if (file.mimetype.startsWith("image/")) {
       cb(null, true);
     } else {
-      cb(new Error("Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed."));
+      cb(new Error("Only image files are allowed."));
     }
   },
   limits: {
@@ -63,16 +64,150 @@ function requireAdmin(req: any, res: any, next: any) {
   return res.status(401).json({ message: "Não autorizado - autenticação necessária" });
 }
 
+// Middleware to require user authentication
+function requireAuth(req: any, res: any, next: any) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  return res.status(401).json({ message: "Autenticação necessária" });
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   console.log("🔧 Registering API routes...");
 
+  // === OAUTH ROUTES ===
+  app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+  app.get(
+    "/auth/google/callback",
+    passport.authenticate("google", { failureRedirect: "/login" }),
+    (req, res) => {
+      console.log("✅ Google OAuth Callback Success");
+      console.log("🔐 Session user:", {
+        userId: (req as any).user?.id,
+        email: (req as any).user?.email,
+        authenticated: req.isAuthenticated(),
+      });
+      res.redirect("/");
+    }
+  );
+
+  // === USER AUTH API ROUTES ===
+  app.get("/api/auth/me", (req, res) => {
+    console.log("🔍 GET /api/auth/me", {
+      isAuthenticated: req.isAuthenticated(),
+      userId: (req as any).user?.id,
+      email: (req as any).user?.email,
+      sessionId: req.sessionID,
+    });
+
+    if (req.isAuthenticated()) {
+      console.log("✅ User is authenticated, returning user data");
+      return res.json(req.user);
+    }
+
+    console.log("❌ User is not authenticated");
+    return res.status(401).json({ message: "Não autenticado" });
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    req.logout(() => {
+      res.json({ success: true });
+    });
+  });
+
+  // === USER PROFILE API ROUTES ===
+  // Get user addresses
+  app.get("/api/user/addresses", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).user.id;
+      const addresses = await storage.getUserAddresses(userId);
+      res.json(addresses);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar endereços" });
+    }
+  });
+
+  // Save/Update user address
+  app.post("/api/user/addresses", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).user.id;
+      const { street, number, complement, neighborhood, city, state, zipCode } = req.body;
+
+      const address = await storage.upsertUserAddress(userId, {
+        street,
+        number,
+        complement,
+        neighborhood,
+        city,
+        state,
+        zipCode,
+      });
+      res.json(address);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao salvar endereço" });
+    }
+  });
+
+  // Get user favorites
+  app.get("/api/user/favorites", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).user.id;
+      const favoriteIds = await storage.getUserFavorites(userId);
+      res.json({ favorites: favoriteIds });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao buscar favoritos" });
+    }
+  });
+
+  // Add favorite
+  app.post("/api/user/favorites/:productId", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).user.id;
+      const productId = Number(req.params.productId);
+      await storage.addFavorite(userId, productId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao adicionar favorito" });
+    }
+  });
+
+  // Remove favorite
+  app.delete("/api/user/favorites/:productId", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).user.id;
+      const productId = Number(req.params.productId);
+      await storage.removeFavorite(userId, productId);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao remover favorito" });
+    }
+  });
+
+  // Get user orders
+  app.get("/api/user/orders", requireAuth, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const userOrders = await storage.getOrdersByEmail(user.email);
+      res.json({ orders: userOrders });
+    } catch (error) {
+      console.error("Erro ao buscar pedidos:", error);
+      res.status(500).json({ message: "Erro ao buscar pedidos" });
+    }
+  });
+
   // Admin authentication routes (no requireAdmin needed for login)
   app.post("/api/admin/login", (req, res) => {
     try {
       const { password } = req.body;
+      console.log("🔐 Login attempt:", {
+        passwordSent: password,
+        expectedPassword: process.env.ADMIN_PASSWORD,
+        match: password === process.env.ADMIN_PASSWORD
+      });
       if (!password) {
         return res.status(400).json({ message: "Senha necessária" });
       }

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Link, useLocation } from "wouter";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { useCart } from "@/hooks/use-cart";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -400,6 +401,7 @@ export default function Cart() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

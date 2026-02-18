@@ -6,6 +6,9 @@ import {
   coupons,
   banners,
   orders,
+  users,
+  userAddresses,
+  favorites,
   type Product,
   type InsertProduct,
   type ProductRow,
@@ -18,6 +21,12 @@ import {
   type InsertBanner,
   type Order,
   type InsertOrder,
+  type User,
+  type InsertUser,
+  type UserAddress,
+  type InsertUserAddress,
+  type Favorite,
+  type InsertFavorite,
   type ProductsQueryParams
 } from "@shared/schema";
 import { eq, and, asc, desc } from "drizzle-orm";
@@ -59,6 +68,16 @@ export interface IStorage {
   getOrder(id: number): Promise<Order | undefined>;
   updateOrderStatus(id: number, status: string, paymentId?: string): Promise<Order | undefined>;
   getOrders(): Promise<Order[]>;
+  getOrdersByEmail(email: string): Promise<Order[]>;
+  getUserByGoogleId(googleId: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserById(id: number): Promise<User | undefined>;
+  createUser(data: InsertUser): Promise<User>;
+  getUserAddresses(userId: number): Promise<UserAddress[]>;
+  upsertUserAddress(userId: number, data: InsertUserAddress): Promise<UserAddress>;
+  getUserFavorites(userId: number): Promise<number[]>;
+  addFavorite(userId: number, productId: number): Promise<void>;
+  removeFavorite(userId: number, productId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -165,6 +184,103 @@ export class DatabaseStorage implements IStorage {
   async getOrders(): Promise<Order[]> {
     return await db!.select().from(orders);
   }
+
+  async getOrdersByEmail(email: string): Promise<Order[]> {
+    const customerOrders = await db!
+      .select()
+      .from(orders)
+      .where(eq(orders.customerEmail, email))
+      .orderBy(desc(orders.createdAt));
+    return customerOrders;
+  }
+
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    const [user] = await db!.select().from(users).where(eq(users.googleId, googleId));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db!.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async getUserById(id: number): Promise<User | undefined> {
+    const [user] = await db!.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async createUser(data: InsertUser): Promise<User> {
+    const [user] = await db!.insert(users).values(data).returning();
+    return user;
+  }
+
+  async getUserAddresses(userId: number): Promise<UserAddress[]> {
+    return await db!.select().from(userAddresses).where(eq(userAddresses.userId, userId));
+  }
+
+  async upsertUserAddress(userId: number, data: InsertUserAddress): Promise<UserAddress> {
+    const existing = await db!.select().from(userAddresses).where(and(eq(userAddresses.userId, userId), eq(userAddresses.isDefault, true)));
+    if (existing.length > 0) {
+      const [updated] = await db!.update(userAddresses).set({ isDefault: false }).where(eq(userAddresses.userId, userId)).returning();
+    }
+    const [address] = await db!.insert(userAddresses).values({ ...data, userId }).returning();
+    return address;
+  }
+
+  async getUserFavorites(userId: number): Promise<number[]> {
+    const favs = await db!.select().from(favorites).where(eq(favorites.userId, userId));
+    return favs.map(f => f.productId);
+  }
+
+  async addFavorite(userId: number, productId: number): Promise<void> {
+    await db!.insert(favorites).values({ userId, productId });
+  }
+
+  async removeFavorite(userId: number, productId: number): Promise<void> {
+    await db!.delete(favorites).where(and(eq(favorites.userId, userId), eq(favorites.productId, productId)));
+  }
+
+  async getPromotions(): Promise<Promotion[]> {
+    return await db!.select().from(promotions);
+  }
+
+  async createPromotion(data: InsertPromotion): Promise<Promotion> {
+    const [promotion] = await db!.insert(promotions).values(data).returning();
+    return promotion;
+  }
+
+  async deletePromotion(id: number): Promise<boolean> {
+    const result = await db!.delete(promotions).where(eq(promotions.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getCoupons(): Promise<Coupon[]> {
+    return await db!.select().from(coupons);
+  }
+
+  async createCoupon(data: InsertCoupon): Promise<Coupon> {
+    const [coupon] = await db!.insert(coupons).values(data).returning();
+    return coupon;
+  }
+
+  async deleteCoupon(id: number): Promise<boolean> {
+    const result = await db!.delete(coupons).where(eq(coupons.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getBanners(): Promise<Banner[]> {
+    return await db!.select().from(banners);
+  }
+
+  async createBanner(data: InsertBanner): Promise<Banner> {
+    const [banner] = await db!.insert(banners).values(data).returning();
+    return banner;
+  }
+
+  async deleteBanner(id: number): Promise<boolean> {
+    const result = await db!.delete(banners).where(eq(banners.id, id)).returning();
+    return result.length > 0;
+  }
 }
 
 export class MemoryStorage implements IStorage {
@@ -227,6 +343,21 @@ export class MemoryStorage implements IStorage {
         const data = JSON.parse(fs.readFileSync(this.ordersFile, "utf-8"));
         this.ordersList = data.orders || [];
         this.nextOrderId = data.nextId || 1;
+      }
+      if (fs.existsSync(this.usersFile)) {
+        const data = JSON.parse(fs.readFileSync(this.usersFile, "utf-8"));
+        this.usersList = data.users || [];
+        this.nextUserId = data.nextId || 1;
+      }
+      if (fs.existsSync(this.addressesFile)) {
+        const data = JSON.parse(fs.readFileSync(this.addressesFile, "utf-8"));
+        this.addressesList = data.addresses || [];
+        this.nextAddressId = data.nextId || 1;
+      }
+      if (fs.existsSync(this.favoritesFile)) {
+        const data = JSON.parse(fs.readFileSync(this.favoritesFile, "utf-8"));
+        this.favoritesList = data.favorites || [];
+        this.nextFavoriteId = data.nextId || 1;
       }
     } catch (error) {
       console.error("Error loading data from files:", error);
@@ -474,6 +605,125 @@ export class MemoryStorage implements IStorage {
 
   async getOrders(): Promise<Order[]> {
     return [...this.ordersList];
+  }
+
+  async getOrdersByEmail(email: string): Promise<Order[]> {
+    return this.ordersList
+      .filter(o => o.customerEmail === email)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  private usersList: User[] = [];
+  private nextUserId = 1;
+  private usersFile = path.join(this.dataDir, "users.json");
+  private addressesList: UserAddress[] = [];
+  private nextAddressId = 1;
+  private addressesFile = path.join(this.dataDir, "addresses.json");
+  private favoritesList: Favorite[] = [];
+  private nextFavoriteId = 1;
+  private favoritesFile = path.join(this.dataDir, "favorites.json");
+
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    return this.usersList.find(u => u.googleId === googleId);
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return this.usersList.find(u => u.email === email);
+  }
+
+  async getUserById(id: number): Promise<User | undefined> {
+    return this.usersList.find(u => u.id === id);
+  }
+
+  async createUser(data: InsertUser): Promise<User> {
+    const user: User = {
+      id: this.nextUserId++,
+      googleId: data.googleId,
+      email: data.email,
+      name: data.name,
+      avatarUrl: data.avatarUrl || null,
+      createdAt: new Date(),
+    } as User;
+    this.usersList.push(user);
+    this.saveUsers();
+    return user;
+  }
+
+  async getUserAddresses(userId: number): Promise<UserAddress[]> {
+    return this.addressesList.filter(a => a.userId === userId);
+  }
+
+  async upsertUserAddress(userId: number, data: InsertUserAddress): Promise<UserAddress> {
+    const defaultAddr = this.addressesList.find(a => a.userId === userId && a.isDefault);
+    if (defaultAddr) {
+      defaultAddr.isDefault = false;
+    }
+    const address: UserAddress = {
+      id: this.nextAddressId++,
+      userId,
+      street: data.street,
+      number: data.number,
+      complement: data.complement || null,
+      neighborhood: data.neighborhood,
+      city: data.city,
+      state: data.state,
+      zipCode: data.zipCode,
+      isDefault: true,
+      createdAt: new Date(),
+    } as UserAddress;
+    this.addressesList.push(address);
+    this.saveAddresses();
+    return address;
+  }
+
+  async getUserFavorites(userId: number): Promise<number[]> {
+    return this.favoritesList.filter(f => f.userId === userId).map(f => f.productId);
+  }
+
+  async addFavorite(userId: number, productId: number): Promise<void> {
+    const exists = this.favoritesList.find(f => f.userId === userId && f.productId === productId);
+    if (!exists) {
+      const favorite: Favorite = {
+        id: this.nextFavoriteId++,
+        userId,
+        productId,
+        createdAt: new Date(),
+      } as Favorite;
+      this.favoritesList.push(favorite);
+      this.saveFavorites();
+    }
+  }
+
+  async removeFavorite(userId: number, productId: number): Promise<void> {
+    const index = this.favoritesList.findIndex(f => f.userId === userId && f.productId === productId);
+    if (index !== -1) {
+      this.favoritesList.splice(index, 1);
+      this.saveFavorites();
+    }
+  }
+
+  private saveUsers() {
+    try {
+      fs.writeFileSync(this.usersFile, JSON.stringify({ users: this.usersList, nextId: this.nextUserId }, null, 2));
+    } catch (error) {
+      console.error("Error saving users:", error);
+    }
+  }
+
+  private saveAddresses() {
+    try {
+      fs.writeFileSync(this.addressesFile, JSON.stringify({ addresses: this.addressesList, nextId: this.nextAddressId }, null, 2));
+    } catch (error) {
+      console.error("Error saving addresses:", error);
+    }
+  }
+
+  private saveFavorites() {
+    try {
+      fs.writeFileSync(this.favoritesFile, JSON.stringify({ favorites: this.favoritesList, nextId: this.nextFavoriteId }, null, 2));
+    } catch (error) {
+      console.error("Error saving favorites:", error);
+    }
   }
 
   private saveOrders() {
