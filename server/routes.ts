@@ -2,7 +2,7 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
-import { orders, trackingEvents } from "@shared/schema";
+import { orders } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -13,6 +13,23 @@ import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 
 const __dirname = process.cwd();
+
+// In-memory store for test order tracking days (orderId -> trackingDay)
+const testOrderTrackingDays = new Map<number, number>();
+
+// Realistic 9-day tracking timeline
+const trackingTimeline = [
+  { day: 0, status: "pending", location: "Armazém - Alemanha", description: "Pedido confirmado e em processamento" },
+  { day: 1, status: "embalado", location: "Armazém - Alemanha", description: "Pedido embalado e pronto para envio" },
+  { day: 2, status: "saiu_alemanha", location: "Centro Postal - Frankfurt", description: "Saiu da Alemanha em direção ao Brasil" },
+  { day: 3, status: "em_transito", location: "Em Trânsito Aéreo", description: "Em voo internacional para o Brasil" },
+  { day: 4, status: "em_transito", location: "Em Trânsito Aéreo", description: "Continuando voo para o Brasil" },
+  { day: 5, status: "alfandega", location: "Alfândega - Aeroporto Internacional", description: "Passando pela alfândega brasileira" },
+  { day: 6, status: "em_transito_br", location: "Distribuição - São Paulo", description: "Em distribuição no Brasil" },
+  { day: 7, status: "em_transito_br", location: "Distribuição Regional", description: "Saiu para entrega" },
+  { day: 8, status: "em_transito_br", location: "Centro de Distribuição Local", description: "Chegou ao centro local" },
+  { day: 9, status: "entregue", location: "Endereço do Cliente - São Paulo", description: "Entregue com sucesso" },
+];
 
 // Configure multer for file uploads - use process.cwd() for absolute path
 const uploadDir = path.join(process.cwd(), "public", "images");
@@ -740,20 +757,18 @@ export async function registerRoutes(
   // Get Order with tracking events
   app.get("/api/orders/:id", async (req, res) => {
     try {
-      const { db } = await import("./db");
-      const { eq } = await import("drizzle-orm");
+      const orderId = parseInt(req.params.id);
+      const order = await storage.getOrder(orderId);
 
-      const order = await storage.getOrder(parseInt(req.params.id));
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      // Get tracking events for this order
-      const events = await db!.select().from(trackingEvents).where(eq(trackingEvents.orderId, parseInt(req.params.id)));
+      // Get current tracking day (from in-memory store for test orders)
+      const currentDay = testOrderTrackingDays.get(orderId) || 0;
 
-      // Get events up to current day
-      const currentDay = (order as any).trackingDay || 0;
-      const visibleEvents = events.filter((e: any) => e.day <= currentDay);
+      // Generate tracking events up to current day
+      const visibleEvents = trackingTimeline.filter((e) => e.day <= currentDay);
 
       res.json({
         ...order,
@@ -768,14 +783,13 @@ export async function registerRoutes(
   });
 
   // === TEST ENDPOINTS ===
-  // Create test order with realistic tracking events
+  // Create test order with realistic tracking simulation
   app.post("/api/test/create-order", async (req, res) => {
     try {
       console.log("📝 Creating test order...");
 
-      // Use database directly to avoid schema issues
+      // Use database directly
       const { db } = await import("./db");
-      const { trackingEvents } = await import("@shared/schema");
 
       const [testOrder] = await db!.insert(orders).values({
         status: "pending",
@@ -786,7 +800,6 @@ export async function registerRoutes(
         customerCpf: "123.456.789-00",
         paymentMethod: "test",
         paymentId: `TEST-${Date.now()}`,
-        trackingDay: 0,
         shippingAddress: {
           cep: "01310-100",
           street: "Avenida Paulista",
@@ -805,26 +818,8 @@ export async function registerRoutes(
         ] as any,
       }).returning();
 
-      // Create realistic 9-day tracking timeline
-      const trackingTimeline = [
-        { day: 0, status: "pending", location: "Armazém - Alemanha", description: "Pedido confirmado e em processamento" },
-        { day: 1, status: "embalado", location: "Armazém - Alemanha", description: "Pedido embalado e pronto para envio" },
-        { day: 2, status: "saiu_alemanha", location: "Centro Postal - Frankfurt", description: "Saiu da Alemanha em direção ao Brasil" },
-        { day: 3, status: "em_transito", location: "Em Trânsito Aéreo", description: "Em voo internacional para o Brasil" },
-        { day: 4, status: "em_transito", location: "Em Trânsito Aéreo", description: "Continuando voo para o Brasil" },
-        { day: 5, status: "alfandega", location: "Alfândega - Aeroporto Internacional", description: "Passando pela alfândega brasileira" },
-        { day: 6, status: "em_transito_br", location: "Distribuição - São Paulo", description: "Em distribuição no Brasil" },
-        { day: 7, status: "em_transito_br", location: "Distribuição Regional", description: "Saiu para entrega" },
-        { day: 8, status: "em_transito_br", location: "Centro de Distribuição Local", description: "Chegou ao centro local" },
-        { day: 9, status: "entregue", location: "Endereço do Cliente - São Paulo", description: "Entregue com sucesso" },
-      ];
-
-      for (const event of trackingTimeline) {
-        await db!.insert(trackingEvents).values({
-          orderId: testOrder.id,
-          ...event,
-        });
-      }
+      // Initialize tracking at day 0
+      testOrderTrackingDays.set(testOrder.id, 0);
 
       console.log("✅ Test order created successfully:", testOrder.id);
       res.json({
@@ -841,35 +836,31 @@ export async function registerRoutes(
     }
   });
 
-  // Advance order status by 1 day
+  // Advance order tracking by 1 day
   app.post("/api/test/advance-status/:orderId", async (req, res) => {
     try {
       const orderId = parseInt(req.params.orderId);
-      const { db } = await import("./db");
-      const { eq } = await import("drizzle-orm");
-
       const order = await storage.getOrder(orderId);
 
       if (!order) {
         return res.status(404).json({ message: "Pedido não encontrado" });
       }
 
-      // Advance by 1 day (max 9 days)
-      const currentDay = (order as any).trackingDay || 0;
+      // Advance by 1 day (max 9 days) - use in-memory store for test orders
+      const currentDay = testOrderTrackingDays.get(orderId) || 0;
       const nextDay = Math.min(currentDay + 1, 9);
 
-      // Update tracking day
-      await db!.update(orders).set({ trackingDay: nextDay }).where(eq(orders.id, orderId));
+      // Update tracking day in memory
+      testOrderTrackingDays.set(orderId, nextDay);
 
-      // Update order status based on day
+      // Update order status based on day progression
       let newStatus = "pending";
-      if (nextDay >= 1) newStatus = "approved"; // Embalado
-      if (nextDay >= 5) newStatus = "approved"; // Em alfândega
-      if (nextDay >= 9) newStatus = "approved"; // Entregue
+      if (nextDay >= 1) newStatus = "approved";
+      if (nextDay >= 9) newStatus = "approved";
 
       await storage.updateOrderStatus(orderId, newStatus);
 
-      console.log(`✅ Order ${orderId} advanced to day ${nextDay}`);
+      console.log(`✅ Order ${orderId} advanced to day ${nextDay}/9`);
       res.json({
         success: true,
         message: `Avançado para dia ${nextDay}/9`,
