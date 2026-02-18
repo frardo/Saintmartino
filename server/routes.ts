@@ -248,7 +248,7 @@ export async function registerRoutes(
   });
 
   // File upload endpoint - using Cloudinary
-  app.post("/api/upload", requireAdmin, (req, res) => {
+  app.post("/api/upload", (req, res) => {
     try {
       console.log("=== UPLOAD REQUEST RECEIVED ===");
       console.log("Cloudinary config:", {

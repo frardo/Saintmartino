@@ -90,8 +90,8 @@ export class DatabaseStorage implements IStorage {
       filters.push(eq(products.type, params.type));
     }
 
-    if (params?.metal) {
-      filters.push(eq(products.metal, params.metal));
+    if (params?.material) {
+      filters.push(eq(products.material, params.material));
     }
 
     if (params?.stone) {

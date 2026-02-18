@@ -113,7 +113,6 @@ export const insertProductSchema = z.object({
   price: z.coerce.string().optional(), // Keep as string for decimal
   type: z.string().optional(),
   material: z.string().optional(), // Material customizável
-  metal: z.string().optional(), // Mantido para compatibilidade
   stone: z.string().optional(),
   imageUrls: z.array(z.string()).optional().default([]),
   isNew: z.boolean().optional(),
@@ -161,7 +160,7 @@ export type ProductsListResponse = Product[];
 // Query types
 export interface ProductsQueryParams {
   type?: string;
-  metal?: string;
+  material?: string;
   stone?: string;
   sort?: 'price_asc' | 'price_desc' | 'newest';
 }
