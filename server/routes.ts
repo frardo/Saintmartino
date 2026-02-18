@@ -787,8 +787,12 @@ export async function registerRoutes(
         message: "Pedido de teste criado com sucesso!",
       });
     } catch (error: any) {
-      console.error("❌ Error creating test order:", error);
-      res.status(500).json({ message: "Erro ao criar pedido de teste" });
+      console.error("❌ Error creating test order:", error.message);
+      console.error("Stack:", error.stack);
+      res.status(500).json({
+        message: "Erro ao criar pedido de teste",
+        error: error.message
+      });
     }
   });
 
