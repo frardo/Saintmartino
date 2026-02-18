@@ -98,7 +98,6 @@ export const orders = pgTable("orders", {
   customerCpf: text("customer_cpf"),
   shippingAddress: jsonb("shipping_address"), // { cep, street, number, complement, neighborhood, city, state }
   items: jsonb("items").notNull(), // Array de { productId, name, price, quantity }
-  shippedAt: timestamp("shipped_at"), // Data de envio (2 dias após payment)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
