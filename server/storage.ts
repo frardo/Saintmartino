@@ -32,7 +32,6 @@ import {
 import { eq, and, asc, desc } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 
 // Helper functions for imageUrls JSON conversion
 function convertProductRow(row: ProductRow): Product {
